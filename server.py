@@ -1078,6 +1078,8 @@ class LocalHTTPServer(ThreadingHTTPServer):
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
     try:
         port = int(os.environ.get("GALLERY_PORT", "8765"))
         if not 0 <= port <= 65535:
