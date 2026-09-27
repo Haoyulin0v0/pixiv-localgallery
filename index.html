@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>画屿 · 本地插画图库</title>
+  <style>
+:root{font-family:"DM Sans","Noto Sans SC",sans-serif;color:#f6f3ee;background:#111318;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+.app-shell{min-height:100vh;display:grid;grid-template-columns:238px minmax(0,1fr)}
+.sidebar{background:#17191f;border-right:1px solid #292b31;padding:31px 17px 24px;display:flex;flex-direction:column;min-height:100vh}
+.brand{display:flex;gap:12px;align-items:center;margin:1px 12px 49px}.brand-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#d8c0fa;color:#251c36;font-size:26px}.brand strong{font-size:20px;letter-spacing:.12em}.brand small{display:block;color:#8c8d96;font-size:11px;letter-spacing:.09em;margin-top:2px}
+.sidebar-label,.eyebrow{color:#c6a7ed;font-size:10px;letter-spacing:.2em;font-weight:700}.sidebar-label{color:#777985;margin:0 13px 12px;letter-spacing:.1em;font-size:11px}
+.nav-item,.facet{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#a7a8b0;text-align:left;padding:10px 13px;border-radius:10px;font-size:13px}.nav-item:hover,.facet:hover{background:#23252c;color:#fff}.nav-item.active,.facet.active{background:#30283d;color:#e7d3ff}.nav-item span{font-size:18px;line-height:1}.nav-item b{margin-left:auto;font-size:11px;font-weight:600;color:#cbb7e5}
+.sidebar-divider{height:1px;background:#292b32;margin:25px 12px}.facet-list{max-height:27vh;overflow:auto}.facet{gap:8px;padding:8px 13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.facet span:first-child{overflow:hidden;text-overflow:ellipsis}.facet b{margin-left:auto;color:#777985;font-size:11px;font-weight:500}.facet.tag-facet:before{content:"#";color:#bb9bdc}.muted{font-size:12px;color:#6e707b;margin:8px 13px}
+.sidebar-bottom{margin-top:auto;padding:20px 10px 0;color:#777985;font-size:11px}.status-dot{display:inline-block;width:6px;height:6px;background:#9bc6ac;border-radius:50%;margin-right:7px}
+.main-content{min-width:0}.topbar{height:84px;padding:18px clamp(24px,4vw,70px);display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #25272d}.search-wrap{height:42px;display:flex;align-items:center;gap:11px;width:min(430px,100%);background:#1d2026;border:1px solid #30323a;border-radius:10px;padding:0 13px;color:#8e9098}.search-wrap span{font-size:24px;line-height:1}.search-wrap input{min-width:0;flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:13px}.search-wrap input::placeholder{color:#7b7d87}.search-wrap kbd{font-family:inherit;font-size:10px;white-space:nowrap;border:1px solid #41434b;border-radius:5px;padding:3px 5px;color:#777985}
+.button{border:0;border-radius:9px;padding:11px 17px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}.button.primary{background:#cfb5f0;color:#271d36}.button.primary:hover,.hero-button:hover{background:#e1cafa}.button.secondary{border:1px solid #484b54;background:#272a31;color:#eee}.button.secondary:hover{background:#363a43}
+.hero{height:300px;margin:28px clamp(24px,4vw,70px) 0;border:1px solid #403549;border-radius:16px;overflow:hidden;position:relative;background:radial-gradient(circle at 83% 55%,#5b3e6e 0,#30253f 30%,transparent 62%),linear-gradient(110deg,#282534 0,#241f2e 75%);display:flex;justify-content:space-between}.hero-copy{z-index:2;padding:36px 0 36px 42px}.hero h1{font-size:clamp(27px,3vw,43px);line-height:1.28;letter-spacing:-.04em;margin:13px 0 9px}.hero em{color:#d9b9f5;font-style:normal}.hero p{color:#b2aaba;font-size:13px;line-height:1.7;margin:0 0 20px}.hero-button{background:#d9bdf7;color:#241b31}.hero-button span{font-size:15px}.hero-art{width:43%;position:relative;flex:none}.art-card{position:absolute;width:150px;height:195px;border-radius:10px;box-shadow:0 18px 45px #100a1a88;display:grid;place-items:center}.art-back{transform:rotate(-17deg);top:70px;right:177px;background:linear-gradient(130deg,#b9a9bf,#594f72)}.art-back span{font-size:100px;color:#ede4d5;opacity:.6}.art-front{transform:rotate(12deg);top:33px;right:65px;background:linear-gradient(145deg,#f1d8bd 0,#bb849e 38%,#60517a 80%)}.art-front span{font-size:110px;color:#ffe2b6;text-shadow:0 4px 15px #7b416b}.art-front i{position:absolute;bottom:0;left:0;right:0;height:54px;background:#2a2437b8}.orb{position:absolute;width:260px;height:260px;border-radius:50%;border:1px solid #c9a8dd55;right:85px;top:21px;box-shadow:0 0 0 45px #c9a8dd0b}
+.library{padding:40px clamp(24px,4vw,70px) 80px}.section-heading{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:23px}.section-heading h2{font-size:25px;letter-spacing:-.03em;margin:7px 0 0}.heading-tools{display:flex;gap:17px;align-items:center;color:#80828e;font-size:12px}.heading-tools select{color:#dbdbe0;background:#1d2026;border:1px solid #333640;border-radius:8px;padding:8px 12px;outline:0}.active-filter{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;background:#342b42;color:#dbc7f0;border-radius:7px;font-size:12px;margin-bottom:19px}.active-filter button{border:0;background:transparent;color:inherit;font-size:17px;line-height:1}.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}.art-item{border:1px solid #30323a;border-radius:12px;overflow:hidden;background:#1b1e24;cursor:pointer;transition:transform .18s,border-color .18s}.art-item:hover{transform:translateY(-4px);border-color:#8e739f}.art-image{width:100%;aspect-ratio:4/4.2;background:#2b2b36;object-fit:cover;display:block}.art-info{padding:13px 14px 15px}.art-title{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px}.art-artist{font-size:11px;color:#9999a4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.art-tags{display:flex;gap:5px;overflow:hidden;margin-top:12px}.art-tags span{font-size:10px;color:#bda5d5;background:#302839;border-radius:5px;padding:3px 6px;white-space:nowrap}.empty-state{border:1px dashed #44414e;border-radius:14px;text-align:center;padding:60px 20px;color:#a3a0ae}.empty-state[hidden]{display:none}.empty-icon{font-size:48px;color:#cfb5f0}.empty-state h3{font-size:18px;color:#f0edf3;margin:9px 0}.empty-state p{font-size:13px;margin:0 0 22px}
+.active-filter[hidden]{display:none}
+.bulk-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:-5px 0 20px;padding:13px;border:1px solid #5a486b;border-radius:10px;background:#27212f;color:#e7d5f5;font-size:12px}.bulk-toolbar[hidden]{display:none}.bulk-toolbar .button{padding:8px 10px}.art-item.bulk-selected{border-color:#d5b7f0;box-shadow:0 0 0 2px #c9a8e277}.bulk-check{position:absolute;top:10px;right:10px;width:26px;height:26px;border:1px solid #d9c6ef;border-radius:7px;background:#17131dcc;display:grid;place-items:center;color:#fff;font-size:18px}.art-item.bulk-mode{position:relative}.bulk-form label{display:block;color:#d0c6d8;font-size:12px;margin:18px 0 8px}.bulk-form input,.bulk-form textarea,.bulk-form select{width:100%;background:#17191e;border:1px solid #48424f;border-radius:8px;color:#fff;padding:10px 12px}.bulk-form textarea{resize:vertical}.bulk-form .bulk-inline{display:flex;align-items:center;gap:8px}.bulk-form .bulk-inline input{width:auto}.bulk-form .button{margin-top:20px}.bulk-form .hint{margin-top:5px}.artist-card-actions{display:flex;gap:7px;flex-wrap:wrap}.artist-follow-button[disabled],#remote-follow[disabled]{opacity:.55;cursor:default}.follow-choice{display:flex;align-items:center;gap:7px;color:#a8a0b0;font-size:11px}.follow-choice select{background:#272a31;border:1px solid #484b54;border-radius:7px;color:#eee;padding:8px}.follow-choice[hidden],#remote-follow[hidden]{display:none}
+.source-input-row{display:flex;gap:7px}.source-input-row input{flex:1}.source-input-row .button{padding:9px 11px}
+#artist-follow-header[hidden],#remote-artist-source[hidden]{display:none}
+dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30px 100px #000a;border-radius:16px;max-width:calc(100vw - 24px)}dialog::backdrop{background:#07080cbb;backdrop-filter:blur(4px)}.modal{width:min(550px,100%);padding:26px}.modal-head{display:flex;justify-content:space-between;align-items:start}.modal-head h2{font-size:23px;margin:5px 0 0}.icon-button{border:0;background:transparent;color:#a9a9b2;font-size:27px;line-height:1;padding:0 3px}.icon-button:hover{color:#fff}.tab-row{display:flex;gap:20px;border-bottom:1px solid #3a3b42;margin:26px 0 22px}.tab{background:transparent;border:0;border-bottom:2px solid transparent;padding:0 2px 12px;color:#9999a3;font-size:13px}.tab.active{color:#e3c4fa;border-color:#d3b4ee}.drop-zone{border:1px dashed #665a72;background:#2b2832;border-radius:12px;padding:28px 16px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:7px;cursor:pointer}.drop-zone:hover,.drop-zone.dragging{background:#3b3045;border-color:#c5a4df}.upload-icon{border-radius:50%;background:#493754;color:#e8cafa;width:38px;height:38px;font-size:24px;display:grid;place-items:center;margin-bottom:6px}.drop-zone strong{font-size:14px}.drop-zone span{font-size:12px;color:#aaa6b1}.drop-zone small{font-size:10px;color:#777681;margin-top:6px}.hint{font-size:11px;color:#94929e;line-height:1.7;margin:16px 1px 0}.tab-panel label,.detail-side label{display:block;font-size:11px;font-weight:700;color:#bcbac4;margin-bottom:8px}.input-row{display:flex;gap:9px}.input-row input,.detail-side input,.detail-side textarea{min-width:0;outline:0;width:100%;background:#17191e;border:1px solid #3b3d45;border-radius:8px;color:#f6f3ee;padding:11px 12px;font-size:12px}.input-row input:focus,.detail-side input:focus,.detail-side textarea:focus{border-color:#c7a7e0}.auth-note{font-size:11px;color:#aaa5b1;margin-top:19px}.message{margin-top:18px;padding:11px;border-radius:8px;font-size:12px;line-height:1.5;background:#294237;color:#c4e8d3}.message.error{background:#493039;color:#ffd2d8}
+.detail-modal{width:min(1000px,calc(100vw - 24px));padding:0}.detail-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);min-height:580px}.preview-area{background:#111318;display:flex;align-items:center;justify-content:center;position:relative;min-height:480px;overflow:hidden}.preview-area img{max-width:100%;max-height:78vh;object-fit:contain}.page-arrow{position:absolute;z-index:2;top:50%;transform:translateY(-50%);font-size:35px;width:38px;height:50px;border:0;background:#111318a8;color:#fff;border-radius:8px}.page-arrow.previous{left:12px}.page-arrow.next{right:12px}.page-arrow[hidden]{display:none}.page-count{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;background:#111318bc;padding:6px 9px;border-radius:6px}.detail-side{padding:27px;display:flex;flex-direction:column}.detail-side form{margin-top:27px}.detail-side form label:not(:first-child){margin-top:18px}.detail-side textarea{resize:vertical}.field-note{display:block;color:#888792;font-size:10px;line-height:1.5;margin-top:6px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:23px}.detail-links{display:flex;gap:15px;margin-top:25px;color:#c9afe0;font-size:11px}.detail-links a:hover{text-decoration:underline}.delete-button{background:transparent;border:0;padding:0;align-self:start;margin-top:auto;color:#9f7984;font-size:11px}.delete-button:hover{color:#ffc3cf}#toast{position:fixed;right:24px;bottom:22px;z-index:10;background:#d9c0f0;color:#271e30;padding:11px 17px;border-radius:8px;font-size:12px;box-shadow:0 10px 32px #0008;display:none}#toast.show{display:block}
+@media(max-width:850px){.app-shell{grid-template-columns:1fr}.sidebar{min-height:0;border-right:0;border-bottom:1px solid #292b31;padding:14px 20px}.brand{margin:0}.sidebar-label,.sidebar-divider,.facet-list,.nav-item,.sidebar-bottom{display:none}.topbar{height:74px}.hero{height:270px}.hero-art{opacity:.55;width:35%}.hero-copy{padding-left:26px}.detail-layout{grid-template-columns:1fr}.preview-area{min-height:300px}.preview-area img{max-height:50vh}.detail-side{min-height:510px}}
+@media(max-width:560px){.topbar{padding:14px 17px;gap:9px}.topbar .button{font-size:0;padding:10px 13px}.topbar .button span{font-size:22px}.search-wrap kbd{display:none}.hero{margin:16px 16px 0;height:250px}.hero-copy{padding:29px 19px}.hero-art{display:none}.library{padding:30px 16px 60px}.section-heading h2{font-size:21px}.heading-tools{gap:5px;flex-direction:column;align-items:end}.art-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.art-info{padding:11px}.modal{padding:20px}.input-row{flex-direction:column}}
+.topbar-actions{display:flex;align-items:center;gap:9px}
+.launch-warning{margin:20px clamp(24px,4vw,70px) 0;padding:15px 18px;border:1px solid #a77e65;border-radius:10px;background:#3a2b29;color:#ffe4d3;font-size:13px;line-height:1.7}
+.launch-warning[hidden]{display:none}.launch-warning a{color:#ffd3a8;text-decoration:underline}
+.remote-view{padding:42px clamp(24px,4vw,70px) 80px}
+.remote-view[hidden],#hero[hidden],#library[hidden]{display:none}
+.remote-heading{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:28px}
+.remote-heading h2{font-size:27px;margin:8px 0 6px}
+.remote-heading p{color:#9c9ca7;font-size:12px;margin:0}
+.remote-message{border:1px solid #564765;background:#30293a;border-radius:10px;padding:17px;color:#e4d5ef;font-size:13px;margin-bottom:20px}
+.remote-message[hidden]{display:none}
+.remote-card{cursor:default}
+.remote-card .art-image{cursor:pointer}
+.remote-card .art-title{cursor:pointer}
+.remote-card .art-info{display:flex;flex-direction:column;min-height:126px}
+.remote-card .art-tags{margin-bottom:11px}
+.remote-card .remote-save-button{margin-top:auto;width:100%}
+.remote-pagination{display:flex;justify-content:center;align-items:center;gap:15px;margin-top:30px;font-size:12px;color:#a5a2ae}
+.remote-pagination[hidden]{display:none}
+.remote-pagination .button[disabled],.remote-save-button[disabled]{opacity:.5;cursor:default}
+.dialog-label{display:block;margin:25px 0 8px;font-size:12px;color:#c8c2cf}
+.cookie-input{width:100%;background:#17191e;border:1px solid #3b3d45;border-radius:8px;color:#f6f3ee;padding:12px;font-size:12px}
+.account-actions{display:flex;gap:9px;margin-top:18px}
+.account-intro{font-size:12px}
+.remember-row{display:flex;align-items:center;gap:8px;margin-top:13px;color:#d7d1df;font-size:12px;cursor:pointer}
+.remember-row input{accent-color:#c8a8e7}
+.remote-modal{width:min(700px,calc(100vw - 24px))}
+.remote-preview-wrap{margin-top:19px;min-height:250px;max-height:57vh;border-radius:10px;background:#14161a;display:flex;justify-content:center;align-items:center;overflow:hidden;position:relative}
+.remote-preview-wrap img{max-height:57vh;max-width:100%;object-fit:contain}
+#remote-detail-loading{position:absolute;color:#aaa6b4;font-size:12px}
+.remote-detail-artist{font-size:12px;color:#aaa6b4}.remote-detail-artist button{border:0;background:none;padding:0;color:#d6baf0;text-decoration:underline;cursor:pointer}.remote-detail-artist button:hover{color:#fff}
+.remote-detail-tags{display:flex;flex-wrap:wrap;gap:6px}
+.remote-detail-tags button,.detail-browse-tags button{font-size:11px;padding:5px 8px;color:#d7bbea;background:#332b3c;border:1px solid #554361;border-radius:6px;cursor:pointer}.remote-detail-tags button:hover,.detail-browse-tags button:hover{background:#503b60;color:#fff}.detail-browse{margin-top:17px}.detail-browse[hidden]{display:none}.detail-browse-title{font-size:11px;color:#9995a3;margin-bottom:8px}.detail-browse-artist{border:0;background:transparent;color:#d6baf0;padding:0;font-size:12px;text-decoration:underline;cursor:pointer}.detail-browse-artist[hidden]{display:none}.detail-browse-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.remote-detail-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}
+.pixiv-search-form{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 14px}.pixiv-search-form select,.pixiv-search-form input{border:1px solid #41434b;border-radius:9px;background:#1d2026;color:#fff;padding:11px 13px;font-size:13px}.pixiv-search-form input{flex:1;min-width:180px}.pixiv-search-form select{min-width:110px}.pixiv-search-form select[hidden]{display:none}.artist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}.artist-card{display:flex;align-items:center;gap:13px;padding:17px;border:1px solid #34343d;border-radius:12px;background:#1b1e24}.artist-avatar{width:55px;height:55px;border-radius:50%;object-fit:cover;background:#393140;flex:none}.artist-card-info{min-width:0;flex:1}.artist-card strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.artist-card small{display:block;color:#9595a0;margin:4px 0 9px}.artist-card .button{padding:8px 10px;font-size:11px}.search-back{margin-bottom:20px}.search-back[hidden],.pixiv-search-form[hidden]{display:none}
+#remote-refresh[hidden]{display:none}
+.ranking-form{display:flex;align-items:center;gap:10px;margin:-6px 0 22px;color:#a9a8b3;font-size:12px}.ranking-form select{border:1px solid #41434b;border-radius:9px;background:#1d2026;color:#fff;padding:10px 13px}.ranking-form[hidden],#remote-sentinel[hidden]{display:none}.rank-badge{position:absolute;top:10px;left:10px;padding:6px 9px;border-radius:7px;background:#1c1729df;color:#f1d8ff;font-size:13px;font-weight:800}.remote-card{position:relative}#remote-sentinel{padding:30px 10px;text-align:center;color:#a9a3b3;font-size:12px}
+@media(max-width:850px){.sidebar{flex-direction:row;align-items:center;gap:5px;flex-wrap:wrap}.brand{margin-right:20px}.sidebar .nav-item{display:flex;width:auto;white-space:nowrap}.sidebar .nav-item b{display:none}.remote-view{padding:30px 24px 60px}}
+@media(max-width:560px){.topbar-actions{gap:5px}.topbar #account-button{font-size:10px;padding:10px 8px}.remote-view{padding:25px 16px 60px}.remote-heading h2{font-size:21px}.remote-heading .button{padding:8px 10px}.sidebar{padding:12px}.brand{width:100%;margin-bottom:7px}.sidebar .nav-item{font-size:11px;padding:7px 9px}.remote-card .art-info{min-height:145px}.remote-card .remote-save-button{white-space:normal;font-size:10px}}
+@media(max-width:850px){.sidebar #follow-count:not([hidden]){display:inline}}
+
+</style>
+
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-icon">✦</span><div><strong>画屿</strong><small>我的插画图库</small></div></div>
+      <div class="sidebar-label">浏览</div>
+      <button class="nav-item active" id="show-all"><span>▦</span> 全部插画 <b id="nav-count">0</b></button>
+      <button class="nav-item" id="show-following"><span>◉</span> 关注新作 <b id="follow-count" hidden>0</b></button>
+      <button class="nav-item" id="show-followed-artists"><span>♡</span> 已关注画师</button>
+      <button class="nav-item" id="show-discover"><span>✧</span> 发现推荐</button>
+      <button class="nav-item" id="show-ranking"><span>♛</span> 全站排行榜</button>
+      <button class="nav-item" id="show-pixiv-search"><span>⌕</span> 搜索 Pixiv</button>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">按画师查找</div>
+      <div id="artist-list" class="facet-list"><p class="muted">还没有画师</p></div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">常用标签</div>
+      <div id="tag-list" class="facet-list"><p class="muted">还没有标签</p></div>
+      <div class="sidebar-bottom"><span class="status-dot"></span> 图片只保存在这台电脑</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索本地图库的标题、画师或标签…" autocomplete="off"><kbd>Ctrl K</kbd></div>
+        <div class="topbar-actions"><button id="account-button" class="button secondary">连接 Pixiv</button><button id="add-button" class="button primary"><span>＋</span> 添加插画</button></div>
+      </header>
+      <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请先解压整个压缩包，双击同文件夹中的 <strong>start.bat</strong>，保持命令窗口开启，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
+
+      <section class="hero" id="hero">
+        <div class="hero-copy"><div class="eyebrow">PERSONAL ART LIBRARY</div><h1>让喜欢的插画，<br><em>随时都找得到。</em></h1><p>收集原图，整理 Pixiv 标签，按画师和关键词快速查找。</p><button id="hero-add" class="button hero-button">开始整理 <span>↗</span></button></div>
+        <div class="hero-art" aria-hidden="true"><div class="art-card art-back"><span>✳</span></div><div class="art-card art-front"><span>✦</span><i></i></div><div class="orb"></div></div>
+      </section>
+
+      <section class="library" id="library">
+        <div class="section-heading"><div><div class="eyebrow">YOUR COLLECTION</div><h2 id="section-title">全部插画</h2></div><div class="heading-tools"><span id="result-count">0 件作品</span><button id="bulk-toggle" class="button secondary" type="button">批量编辑</button><select id="sort" aria-label="排序"><option value="new">最近添加</option><option value="old">最早添加</option><option value="title">标题 A–Z</option><option value="artist">画师 A–Z</option></select></div></div>
+        <div id="active-filter" class="active-filter" hidden></div>
+        <div id="bulk-toolbar" class="bulk-toolbar" hidden><strong id="bulk-count">已选 0 件</strong><button id="bulk-select-visible" class="button secondary" type="button">全选当前结果</button><button id="bulk-clear" class="button secondary" type="button">清空选择</button><button id="bulk-edit" class="button primary" type="button">修改画师 / 标签</button><button id="bulk-cancel" class="button secondary" type="button">退出批量编辑</button></div>
+        <div id="empty" class="empty-state"><div class="empty-icon">✧</div><h3>图库还是空的</h3><p>上传已有图片，或输入 Pixiv 作品链接导入。</p><button class="button secondary" id="empty-add">添加第一张插画</button></div>
+        <div id="grid" class="art-grid"></div>
+      </section>
+      <section id="remote-view" class="remote-view" hidden>
+        <div class="remote-heading"><div><div class="eyebrow">PIXIV LIVE</div><h2 id="remote-title">关注新作</h2><p id="remote-description"></p></div><div class="artist-card-actions"><button id="artist-follow-header" class="button secondary artist-follow-button" type="button" hidden>关注画师</button><button id="remote-refresh" class="button secondary">刷新作品</button></div></div>
+        <form id="pixiv-search-form" class="pixiv-search-form" hidden><select id="pixiv-search-kind" aria-label="搜索类型"><option value="artworks">插画作品</option><option value="artists">画师</option></select><input id="pixiv-search-query" type="search" maxlength="100" placeholder="输入标签、关键词、画师名称或用户 ID" aria-label="Pixiv 搜索词"><select id="pixiv-search-order" aria-label="插画排序"><option value="date_d">最新</option><option value="hot">热门精选</option><option value="popular_d">完整热门排序（需 Premium）</option></select><button class="button primary" type="submit">搜索</button></form>
+        <div id="ranking-form" class="ranking-form" hidden><label for="ranking-mode">榜单</label><select id="ranking-mode"><option value="daily">日榜</option><option value="weekly">周榜</option><option value="monthly">月榜</option><option value="rookie">新人榜</option></select></div>
+        <button id="search-back" class="button secondary search-back" hidden>← 返回画师搜索结果</button>
+        <div id="remote-message" class="remote-message" hidden></div>
+        <div id="remote-grid" class="art-grid"></div>
+        <div id="remote-sentinel" hidden>向下滚动，继续获取新的推荐…</div>
+        <div class="remote-pagination"><button id="remote-prev" class="button secondary">上一页</button><span id="remote-page">第 1 页</span><button id="remote-next" class="button secondary">下一页</button></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="account-dialog" class="modal">
+    <div class="modal-head"><div><div class="eyebrow">PIXIV CONNECTION</div><h2>连接 Pixiv 账号</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+    <p class="hint account-intro">首次连接时，复制已登录 Pixiv 的 <strong>PHPSESSID</strong> Cookie 值。勾选“记住连接”后，下次启动会自动读取。</p>
+    <label for="session-cookie" class="dialog-label">PHPSESSID 的值</label>
+    <input id="session-cookie" class="cookie-input" type="password" autocomplete="off" placeholder="粘贴 Cookie 值，不要包含 PHPSESSID=">
+    <label class="remember-row"><input id="remember-session" type="checkbox" checked>在这台电脑记住连接（Windows 加密保存）</label>
+    <div class="account-actions"><button id="connect-button" class="button primary">连接并验证</button><button id="disconnect-button" class="button secondary">断开连接</button></div>
+    <p class="hint">查看方式：Pixiv 页面按 F12 → 应用程序 / 存储 → Cookies → pixiv.net。请勿分享 Cookie；它相当于登录凭据。服务只监听本机地址。</p>
+    <div id="account-message" class="message" hidden></div>
+  </dialog>
+
+  <dialog id="add-dialog" class="modal">
+    <div class="modal-head"><div><div class="eyebrow">ADD TO LIBRARY</div><h2>添加插画</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+    <div class="tab-row"><button class="tab active" data-tab="local">导入本地图片</button><button class="tab" data-tab="pixiv">从 Pixiv 导入</button></div>
+    <div id="local-panel" class="tab-panel">
+      <div id="drop-zone" class="drop-zone" tabindex="0"><div class="upload-icon">↑</div><strong>拖放图片到这里</strong><span>或点击选择文件，可一次选择多张</span><small>JPG、PNG、GIF、WebP、AVIF · 单张最大 60 MB</small></div>
+      <input id="file-input" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,image/*" multiple hidden>
+      <p class="hint">导入后点击作品卡片，可补充画师、Pixiv 标签及画师 ID。</p>
+    </div>
+    <div id="pixiv-panel" class="tab-panel" hidden>
+      <label for="pixiv-url">作品链接或 ID</label>
+      <div class="input-row"><input id="pixiv-url" type="text" placeholder="https://www.pixiv.net/artworks/12345678"><button id="pixiv-import" class="button primary">导入原图</button></div>
+      <p class="hint">每次导入一件作品；多页作品会保存全部原图和作品标签。需要网络连接，部分作品需要在启动前配置 Pixiv 登录 Cookie。</p>
+      <div id="pixiv-auth" class="auth-note"></div>
+    </div>
+    <div id="add-message" class="message" hidden></div>
+  </dialog>
+  <dialog id="remote-dialog" class="modal remote-modal">
+    <div class="modal-head"><div><div class="eyebrow">PIXIV ARTWORK</div><h2 id="remote-detail-title">作品预览</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+    <div class="remote-preview-wrap"><img id="remote-detail-image" alt=""><div id="remote-detail-loading">正在读取作品信息…</div></div>
+    <p id="remote-detail-artist" class="remote-detail-artist"></p>
+    <div id="remote-detail-tags" class="remote-detail-tags"></div>
+    <div class="remote-detail-actions"><button id="remote-save" class="button primary">保存原图到图库</button><button id="remote-follow" class="button secondary" type="button" hidden>关注画师</button><label id="follow-choice" class="follow-choice" hidden>可见范围 <select id="follow-privacy"><option value="public">公开</option><option value="private">私密</option></select></label><a id="remote-artist-source" class="button secondary" target="_blank" rel="noopener noreferrer" hidden>画师主页 ↗</a><a id="remote-source" class="button secondary" target="_blank" rel="noopener noreferrer">在 Pixiv 查看 ↗</a></div>
+    <div id="remote-detail-message" class="message" hidden></div>
+  </dialog>
+
+  <dialog id="bulk-dialog" class="modal">
+    <div class="modal-head"><div><div class="eyebrow">BULK EDIT</div><h2>批量修改作品</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+    <p id="bulk-dialog-count" class="hint"></p>
+    <form id="bulk-form" class="bulk-form">
+      <label class="bulk-inline"><input id="bulk-change-artist" type="checkbox">统一修改画师</label>
+      <input id="bulk-artist" maxlength="200" placeholder="画师名称；留空可清除" disabled>
+      <label for="bulk-artist-id">Pixiv 画师 ID（可选）</label><input id="bulk-artist-id" maxlength="12" inputmode="numeric" placeholder="数字 ID；留空可清除" disabled>
+      <label for="bulk-tag-mode">标签操作</label><select id="bulk-tag-mode"><option value="none">不修改标签</option><option value="add">添加标签</option><option value="remove">移除标签</option><option value="replace">替换全部标签</option></select>
+      <label for="bulk-tags">标签</label><textarea id="bulk-tags" rows="4" placeholder="用逗号或换行分隔标签" disabled></textarea>
+      <p class="hint">“添加”保留原标签并去重；“移除”只删指定标签；“替换”会覆盖所选作品的全部标签，留空则清空。</p>
+      <button class="button primary" type="submit">保存到所选作品</button>
+    </form>
+    <div id="bulk-message" class="message" hidden></div>
+  </dialog>
+
+  <dialog id="detail-dialog" class="modal detail-modal">
+    <div class="detail-layout">
+      <div class="preview-area"><button id="previous-page" class="page-arrow previous" aria-label="上一页">‹</button><img id="detail-image" alt=""><button id="next-page" class="page-arrow next" aria-label="下一页">›</button><span id="page-count" class="page-count"></span></div>
+      <div class="detail-side">
+        <div class="modal-head"><div><div class="eyebrow">ARTWORK DETAILS</div><h2>作品信息</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+        <form id="detail-form">
+          <label for="detail-title">标题</label><input id="detail-title" maxlength="200" required>
+          <label for="detail-artist">画师</label><input id="detail-artist" maxlength="200" placeholder="画师名称">
+          <label for="detail-artist-id">Pixiv 画师 ID</label><input id="detail-artist-id" maxlength="30" placeholder="数字 ID（可选）">
+          <label for="detail-source">Pixiv 作品链接</label>
+          <div class="source-input-row"><input id="detail-source" placeholder="https://www.pixiv.net/artworks/12345678"><button id="load-tags" class="button secondary" type="button">读取标签</button></div>
+          <label for="detail-tags">标签</label><textarea id="detail-tags" rows="4" placeholder="用逗号或换行分隔标签"></textarea>
+          <span class="field-note">Pixiv 标签可能被用户修改；你也可以添加自己的分类。</span>
+          <div class="detail-actions"><button class="button primary" type="submit">保存修改</button><button id="open-local" class="button secondary" type="button">打开本地原图</button><button id="reveal-local" class="button secondary" type="button">在文件夹中显示</button><a id="download-link" class="button secondary" download>下载当前原图</a></div>
+        </form>
+        <div id="detail-browse" class="detail-browse" hidden><div class="detail-browse-title">查看相关 Pixiv 作品</div><button id="detail-browse-artist" class="detail-browse-artist" type="button">画师的其他插画 ↗</button><div id="detail-browse-tags" class="detail-browse-tags"></div></div>
+        <div class="detail-links"><a id="source-link" target="_blank" rel="noopener noreferrer" hidden>在 Pixiv 查看 ↗</a><a id="artist-link" target="_blank" rel="noopener noreferrer" hidden>画师主页 ↗</a></div>
+        <button id="delete-button" class="delete-button">从图库删除这件作品</button>
+        <div id="detail-message" class="message" hidden></div>
+      </div>
+    </div>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+<script>
+const state = {
+  artworks: [], filter: null, search: "", selected: null, page: 0,
+  view: "library", remotePage: 1, remoteItems: [], remoteLastPage: true,
+  remoteSelected: null, connected: false, followSeenIds: null, newFollowCount: 0,
+  searchKind: "artworks", searchQuery: "", searchSort: "date_d",
+  artistId: "", artistName: "", artists: [], followedArtist: null,
+  followedListCache: new Map(), followedListPage: 1, followedListScrollY: 0,
+  restoreFollowedScroll: false,
+  discoverItems: [], discoverSeen: new Set(), discoverLoading: false,
+  discoverEmptyBatches: 0, discoverGeneration: 0, discoverRetryTimer: null,
+  rankingMode: "daily",
+  previewReturn: null, restorePreviewScroll: null,
+  bulkMode: false, bulkSelected: new Set(), followStatus: new Map(), followSelfIds: new Set(),
+  pendingProfileArtistId: ""
+};
+const $ = (selector) => document.querySelector(selector);
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+})[char]);
+
+async function api(path, options = {}) {
+  if (location.protocol === "file:") {
+    throw new Error("当前直接打开了 index.html。请解压整个压缩包，双击 start.bat，并在 http://127.0.0.1:8765 打开图库。");
+  }
+  let response;
+  try { response = await fetch(path, options); }
+  catch { throw new Error("无法连接本地服务。请双击 start.bat，保持命令窗口开启，然后访问 http://127.0.0.1:8765。"); }
+  if (!response.headers.get("Content-Type")?.includes("application/json")) {
+    if (response.status === 404 && path.startsWith("/api/")) {
+      throw new Error("正在运行的是旧版本地服务。请关闭所有画屿命令窗口，再双击新版 start.bat；如果已开多个窗口，需要全部关闭。");
+    }
+    throw new Error(`本地服务返回了非 JSON 内容（HTTP ${response.status}）。请查看启动服务的命令窗口中的报错。`);
+  }
+  let result;
+  try { result = await response.json(); } catch { throw new Error("本地服务返回了无效数据。"); }
+  if (!response.ok) throw new Error(result.error || `请求失败（${response.status}）。`);
+  return result;
+}
+
+function showMessage(node, message, error = false) {
+  node.textContent = message;
+  node.classList.toggle("error", error);
+  node.hidden = !message;
+}
+
+let toastTimer;
+function toast(message) {
+  const node = $("#toast");
+  node.textContent = message;
+  node.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => node.classList.remove("show"), 3500);
+}
+
+async function reload() {
+  const result = await api("/api/artworks");
+  state.artworks = result.artworks;
+  render();
+}
+
+function filterArtworks() {
+  const search = state.search.trim().toLocaleLowerCase();
+  const filtered = state.artworks.filter((art) => {
+    if (state.filter?.kind === "artist" && art.artist !== state.filter.value) return false;
+    if (state.filter?.kind === "tag" && !art.tags.includes(state.filter.value)) return false;
+    if (!search) return true;
+    return [art.title, art.artist, art.artist_id, art.pixiv_id, ...art.tags]
+      .some((value) => String(value || "").toLocaleLowerCase().includes(search));
+  });
+  const sort = $("#sort").value;
+  filtered.sort((a, b) => {
+    if (sort === "old") return a.created_at - b.created_at;
+    if (sort === "title") return a.title.localeCompare(b.title, "zh");
+    if (sort === "artist") return a.artist.localeCompare(b.artist, "zh");
+    return b.created_at - a.created_at;
+  });
+  return filtered;
+}
+
+function renderFacets() {
+  const artistCounts = new Map();
+  const tagCounts = new Map();
+  for (const art of state.artworks) {
+    if (art.artist) artistCounts.set(art.artist, (artistCounts.get(art.artist) || 0) + 1);
+    for (const tag of art.tags) tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+  }
+  const createFacet = (kind, value, count) => {
+    const button = document.createElement("button");
+    button.className = "facet" + (kind === "tag" ? " tag-facet" : "") +
+      (state.filter?.kind === kind && state.filter.value === value ? " active" : "");
+    const name = document.createElement("span");
+    name.textContent = value;
+    const badge = document.createElement("b");
+    badge.textContent = count;
+    button.append(name, badge);
+    button.addEventListener("click", () => {
+      state.filter = { kind, value };
+      switchView("library");
+      $(".library").scrollIntoView({ behavior: "smooth" });
+    });
+    return button;
+  };
+  const fill = (selector, counts, kind) => {
+    const holder = $(selector);
+    holder.replaceChildren();
+    const entries = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh")).slice(0, 30);
+    if (!entries.length) {
+      const text = document.createElement("p");
+      text.className = "muted";
+      text.textContent = kind === "artist" ? "还没有画师" : "还没有标签";
+      holder.append(text);
+    }
+    for (const [name, count] of entries) holder.append(createFacet(kind, name, count));
+  };
+  fill("#artist-list", artistCounts, "artist");
+  fill("#tag-list", tagCounts, "tag");
+}
+
+function render() {
+  const items = filterArtworks();
+  const validIds = new Set(state.artworks.map((art) => art.id));
+  for (const id of state.bulkSelected) if (!validIds.has(id)) state.bulkSelected.delete(id);
+  $("#bulk-toolbar").hidden = !state.bulkMode;
+  $("#bulk-toggle").textContent = state.bulkMode ? "完成编辑" : "批量编辑";
+  $("#bulk-count").textContent = `已选 ${state.bulkSelected.size} 件`;
+  $("#bulk-edit").disabled = !state.bulkSelected.size;
+  $("#nav-count").textContent = state.artworks.length;
+  $("#result-count").textContent = `${items.length} 件作品`;
+  $("#section-title").textContent = state.filter
+    ? (state.filter.kind === "tag" ? `# ${state.filter.value}` : state.filter.value)
+    : "全部插画";
+  $("#show-all").classList.toggle("active", state.view === "library" && !state.filter);
+  const activeFilter = $("#active-filter");
+  activeFilter.hidden = !state.filter;
+  if (state.filter) {
+    activeFilter.replaceChildren();
+    const label = document.createElement("span");
+    label.textContent = `已筛选：${state.filter.value}`;
+    const clear = document.createElement("button");
+    clear.setAttribute("aria-label", "清除筛选");
+    clear.textContent = "×";
+    clear.onclick = () => { state.filter = null; render(); };
+    activeFilter.append(label, clear);
+  }
+  renderFacets();
+  $("#empty").hidden = items.length > 0;
+  $("#empty").querySelector("h3").textContent =
+    state.artworks.length === 0 ? "图库还是空的" : "没有找到匹配的作品";
+  $("#empty").querySelector("p").textContent =
+    state.artworks.length === 0 ? "上传已有图片，或输入 Pixiv 作品链接导入。" : "试试别的关键词，或清除画师和标签筛选。";
+  $("#empty-add").hidden = state.artworks.length > 0;
+  const grid = $("#grid");
+  grid.replaceChildren();
+  for (const art of items) {
+    const card = document.createElement("article");
+    card.className = "art-item";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `${state.bulkMode ? "选择" : "查看"} ${art.title}`);
+    if (state.bulkMode) card.classList.add("bulk-mode");
+    if (state.bulkSelected.has(art.id)) card.classList.add("bulk-selected");
+    const image = art.images[0] ? `/images/${encodeURIComponent(art.images[0])}` : "";
+    card.innerHTML = `
+      <img class="art-image" src="${image}" alt="${escapeHtml(art.title)}" loading="lazy">
+      ${state.bulkMode ? `<span class="bulk-check" aria-hidden="true">${state.bulkSelected.has(art.id) ? "✓" : ""}</span>` : ""}
+      <div class="art-info">
+        <div class="art-title" title="${escapeHtml(art.title)}">${escapeHtml(art.title)}</div>
+        <div class="art-artist">${escapeHtml(art.artist || "未设置画师")}${art.images.length > 1 ? ` · ${art.images.length} 页` : ""}</div>
+        <div class="art-tags">${art.tags.slice(0, 3).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}</div>
+      </div>`;
+    let clickTimer;
+    card.addEventListener("click", () => {
+      if (state.bulkMode) { toggleBulkSelection(art.id); return; }
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => openDetail(art), 450);
+    });
+    card.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      if (state.bulkMode) return;
+      clearTimeout(clickTimer);
+      openLocalImage(art, 0, "both");
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); state.bulkMode ? toggleBulkSelection(art.id) : openDetail(art); }
+    });
+    grid.append(card);
+  }
+  restoreBrowseScroll();
+}
+
+function toggleBulkSelection(id) {
+  if (state.bulkSelected.has(id)) state.bulkSelected.delete(id);
+  else if (state.bulkSelected.size < 500) state.bulkSelected.add(id);
+  else { toast("一次最多选择 500 件作品"); return; }
+  render();
+}
+
+function exitBulkMode() {
+  state.bulkMode = false;
+  state.bulkSelected.clear();
+  render();
+}
+
+function openBulkDialog() {
+  if (!state.bulkSelected.size) return;
+  $("#bulk-form").reset();
+  $("#bulk-artist").disabled = true;
+  $("#bulk-artist-id").disabled = true;
+  $("#bulk-tags").disabled = true;
+  $("#bulk-dialog-count").textContent = `已选 ${state.bulkSelected.size} 件作品；修改只影响本地图库。`;
+  showMessage($("#bulk-message"), "");
+  $("#bulk-dialog").showModal();
+}
+
+async function saveBulkChanges(event) {
+  event.preventDefault();
+  const payload = { ids: [...state.bulkSelected] };
+  if ($("#bulk-change-artist").checked) payload.artist = {
+    name: $("#bulk-artist").value.trim(), id: $("#bulk-artist-id").value.trim()
+  };
+  if ($("#bulk-tag-mode").value !== "none") payload.tags = {
+    mode: $("#bulk-tag-mode").value, values: $("#bulk-tags").value
+  };
+  if (!payload.artist && !payload.tags) return showMessage($("#bulk-message"), "请选择要修改的画师或标签。", true);
+  const button = $("#bulk-form button[type=submit]");
+  button.disabled = true;
+  try {
+    const result = await api("/api/artworks/bulk", {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    $("#bulk-dialog").close();
+    exitBulkMode();
+    await reload();
+    toast(`已修改 ${result.updated} 件作品`);
+  } catch (error) {
+    showMessage($("#bulk-message"), error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function openAdd(tab = "local") {
+  setTab(tab);
+  showMessage($("#add-message"), "");
+  $("#add-dialog").showModal();
+}
+
+function setTab(tab) {
+  for (const button of document.querySelectorAll(".tab")) {
+    button.classList.toggle("active", button.dataset.tab === tab);
+  }
+  $("#local-panel").hidden = tab !== "local";
+  $("#pixiv-panel").hidden = tab !== "pixiv";
+}
+
+async function uploadFiles(files) {
+  const images = [...files].filter((file) => /\.(jpe?g|png|gif|webp|avif)$/i.test(file.name));
+  if (!images.length) return showMessage($("#add-message"), "请选择受支持的图片文件。", true);
+  showMessage($("#add-message"), `正在导入 0 / ${images.length}…`);
+  let success = 0;
+  const failures = [];
+  for (const file of images) {
+    try {
+      if (file.size > 60 * 1024 * 1024) throw new Error("超过 60 MB");
+      await api(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+        method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: file
+      });
+      success++;
+    } catch (error) {
+      failures.push(`${file.name}：${error.message}`);
+    }
+    showMessage($("#add-message"), `正在导入 ${success + failures.length} / ${images.length}…`);
+  }
+  await reload();
+  showMessage($("#add-message"), `已导入 ${success} 张。${failures.length ? " 失败：" + failures.join("；") : ""}`, failures.length > 0);
+  if (success) toast(`已添加 ${success} 张图片`);
+}
+
+async function importPixiv() {
+  const button = $("#pixiv-import");
+  const url = $("#pixiv-url").value.trim();
+  if (!url) return showMessage($("#add-message"), "请先输入作品链接或 ID。", true);
+  button.disabled = true;
+  button.textContent = "正在获取…";
+  showMessage($("#add-message"), "正在获取作品信息和原图。多页作品可能需要稍等。");
+  try {
+    const result = await api("/api/pixiv/import", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url })
+    });
+    $("#pixiv-url").value = "";
+    await reload();
+    showMessage($("#add-message"), `已导入 ${result.pages} 张原图，标签已保存。`);
+    toast("Pixiv 作品已添加");
+  } catch (error) {
+    showMessage($("#add-message"), error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "导入原图";
+  }
+}
+
+function openDetail(art) {
+  state.selected = art;
+  state.page = 0;
+  $("#detail-title").value = art.title;
+  $("#detail-artist").value = art.artist;
+  $("#detail-artist-id").value = art.artist_id;
+  $("#detail-source").value = art.source_url;
+  $("#detail-tags").value = art.tags.join("，");
+  $("#source-link").hidden = !art.source_url;
+  $("#source-link").href = art.source_url || "#";
+  $("#artist-link").hidden = !/^\d+$/.test(art.artist_id);
+  $("#artist-link").href = /^\d+$/.test(art.artist_id)
+    ? `https://www.pixiv.net/users/${art.artist_id}` : "#";
+  showMessage($("#detail-message"), "");
+  showPage();
+  renderLocalBrowseLinks();
+  $("#detail-dialog").showModal();
+}
+
+function renderLocalBrowseLinks() {
+  const name = $("#detail-artist").value.trim();
+  const id = $("#detail-artist-id").value.trim();
+  const tags = [...new Set($("#detail-tags").value.split(/[,，\n]+/).map((tag) => tag.trim()).filter(Boolean))];
+  const artistButton = $("#detail-browse-artist");
+  artistButton.hidden = !name && !/^\d+$/.test(id);
+  artistButton.textContent = name ? `查看 ${name} 的其他插画 ↗` : "查看画师的其他插画 ↗";
+  artistButton.onclick = () => browsePixivAuthor(id, name);
+  const holder = $("#detail-browse-tags");
+  holder.replaceChildren();
+  for (const tag of tags) holder.append(createBrowseTag(tag));
+  $("#detail-browse").hidden = artistButton.hidden && !tags.length;
+}
+
+function captureBrowseOrigin() {
+  state.previewReturn = {
+    view: state.view, page: state.remotePage, scrollY: window.scrollY,
+    searchKind: state.searchKind, searchQuery: state.searchQuery,
+    searchSort: state.searchSort, artistId: state.artistId,
+    artistName: state.artistName, followedArtist: state.followedArtist,
+  };
+}
+
+function browsePixivAuthor(artistId, artistName) {
+  const id = String(artistId || "").trim();
+  const name = String(artistName || "").trim();
+  if (!/^\d+$/.test(id) && !name) return;
+  captureBrowseOrigin();
+  for (const dialog of [$("#remote-dialog"), $("#detail-dialog")]) {
+    if (dialog.open) dialog.close();
+  }
+  state.artistId = /^\d+$/.test(id) ? id : "";
+  state.artistName = name || `画师 ${id}`;
+  state.searchKind = state.artistId ? "artist_works" : "artists";
+  state.searchQuery = name || id;
+  state.searchSort = "date_d";
+  $("#pixiv-search-kind").value = "artists";
+  $("#pixiv-search-query").value = state.searchQuery;
+  $("#pixiv-search-order").hidden = true;
+  switchView("search");
+  window.scrollTo(0, 0);
+}
+
+function browsePixivTag(tag) {
+  if (!tag) return;
+  captureBrowseOrigin();
+  for (const dialog of [$("#remote-dialog"), $("#detail-dialog")]) {
+    if (dialog.open) dialog.close();
+  }
+  state.searchKind = "artworks";
+  state.searchQuery = tag;
+  state.searchSort = "date_d";
+  state.artistId = "";
+  state.artistName = "";
+  $("#pixiv-search-kind").value = "artworks";
+  $("#pixiv-search-query").value = tag;
+  $("#pixiv-search-order").value = "date_d";
+  $("#pixiv-search-order").hidden = false;
+  switchView("search");
+  window.scrollTo(0, 0);
+}
+
+function restoreBrowseOrigin() {
+  const target = state.previewReturn;
+  if (!target) return;
+  state.previewReturn = null;
+  state.searchKind = target.searchKind;
+  state.searchQuery = target.searchQuery;
+  state.searchSort = target.searchSort;
+  state.artistId = target.artistId;
+  state.artistName = target.artistName;
+  $("#pixiv-search-kind").value = target.searchKind === "artworks" ? "artworks" : "artists";
+  $("#pixiv-search-query").value = target.searchQuery;
+  $("#pixiv-search-order").value = target.searchSort;
+  $("#pixiv-search-order").hidden = target.searchKind !== "artworks";
+  state.restorePreviewScroll = {view: target.view, y: target.scrollY};
+  switchView(target.view, {
+    page: target.page, followedArtist: target.followedArtist,
+    preserveDiscover: target.view === "discover",
+  });
+}
+
+function restoreBrowseScroll() {
+  const target = state.restorePreviewScroll;
+  if (!target || target.view !== state.view) return;
+  state.restorePreviewScroll = null;
+  requestAnimationFrame(() => window.scrollTo(0, target.y));
+}
+
+function createBrowseTag(tag) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = `#${tag}`;
+  button.title = `搜索 Pixiv 标签：${tag}`;
+  button.onclick = () => browsePixivTag(tag);
+  return button;
+}
+
+function showPage() {
+  const art = state.selected;
+  if (!art) return;
+  const image = art.images[state.page];
+  const url = `/images/${encodeURIComponent(image)}`;
+  $("#detail-image").src = url;
+  $("#detail-image").alt = `${art.title} 第 ${state.page + 1} 页`;
+  $("#download-link").href = url;
+  $("#download-link").download = image;
+  $("#page-count").textContent = `${state.page + 1} / ${art.images.length}`;
+  $("#previous-page").hidden = state.page <= 0;
+  $("#next-page").hidden = state.page >= art.images.length - 1;
+}
+
+async function saveDetail(event) {
+  event.preventDefault();
+  const art = state.selected;
+  if (!art) return;
+  const update = {
+    title: $("#detail-title").value,
+    artist: $("#detail-artist").value,
+    artist_id: $("#detail-artist-id").value,
+    source_url: $("#detail-source").value,
+    tags: $("#detail-tags").value
+  };
+  try {
+    await api(`/api/artworks/${encodeURIComponent(art.id)}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update)
+    });
+    await reload();
+    state.selected = state.artworks.find((item) => item.id === art.id);
+    renderLocalBrowseLinks();
+    showMessage($("#detail-message"), "修改已保存。");
+    toast("作品信息已保存");
+  } catch (error) {
+    showMessage($("#detail-message"), error.message, true);
+  }
+}
+
+async function deleteDetail() {
+  const art = state.selected;
+  if (!art || !confirm(`确定删除“${art.title}”及其本地图片吗？此操作无法撤销。`)) return;
+  try {
+    await api(`/api/artworks/${encodeURIComponent(art.id)}`, { method: "DELETE" });
+    $("#detail-dialog").close();
+    state.selected = null;
+    await reload();
+    toast("作品已删除");
+  } catch (error) {
+    showMessage($("#detail-message"), error.message, true);
+  }
+}
+
+async function loadPixivTags() {
+  const source = $("#detail-source").value.trim();
+  if (!source) return showMessage($("#detail-message"), "先输入 Pixiv 作品链接或 ID。", true);
+  const button = $("#load-tags");
+  button.disabled = true;
+  button.textContent = "读取中…";
+  try {
+    const item = await api("/api/pixiv/metadata", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: source })
+    });
+    $("#detail-title").value = item.title;
+    $("#detail-artist").value = item.artist;
+    $("#detail-artist-id").value = item.artist_id;
+    $("#detail-source").value = item.source_url;
+    $("#detail-tags").value = item.tags.join("，");
+    renderLocalBrowseLinks();
+    showMessage($("#detail-message"), "已读取 Pixiv 信息。点击“保存修改”即可保存到图库。");
+  } catch (error) {
+    showMessage($("#detail-message"), error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "读取标签";
+  }
+}
+
+function switchView(view, options = {}) {
+  if (state.view === "search" && view !== "search") state.previewReturn = null;
+  const previousView = state.view;
+  if (view !== "discover" || !options.preserveDiscover) {
+    clearTimeout(state.discoverRetryTimer);
+    state.discoverRetryTimer = null;
+  }
+  const wasViewingFollowedArtist = previousView === "followed_artists" && Boolean(state.followedArtist);
+  if (state.view === "followed_artists" && !state.followedArtist) {
+    state.followedListPage = state.remotePage;
+    state.followedListScrollY = window.scrollY;
+  }
+  state.view = view;
+  $("#artist-follow-header").hidden = true;
+  $("#hero").hidden = view !== "library";
+  $("#library").hidden = view !== "library";
+  $("#remote-view").hidden = view === "library";
+  $("#search").disabled = view !== "library";
+  $("#show-all").classList.toggle("active", view === "library" && !state.filter);
+  $("#show-following").classList.toggle("active", view === "following");
+  $("#show-followed-artists").classList.toggle("active", view === "followed_artists");
+  $("#show-discover").classList.toggle("active", view === "discover");
+  $("#show-ranking").classList.toggle("active", view === "ranking");
+  $("#show-pixiv-search").classList.toggle("active", view === "search");
+  $("#pixiv-search-form").hidden = view !== "search";
+  $("#ranking-form").hidden = view !== "ranking";
+  $("#remote-sentinel").hidden = view !== "discover";
+  $("#remote-refresh").hidden = view === "search" || view === "discover";
+  $("#remote-refresh").textContent = view === "followed_artists" ? "刷新列表" : view === "ranking" ? "刷新榜单" : "刷新作品";
+  $("#search-back").hidden = view !== "search" ||
+    (!state.previewReturn && state.searchKind !== "artist_works");
+  if (view === "library") {
+    render();
+    return;
+  }
+  state.remotePage = options.page || 1;
+  if (view === "followed_artists") {
+    state.followedArtist = options.followedArtist || null;
+    if (!state.followedArtist) state.remotePage = state.followedListPage;
+    state.restoreFollowedScroll = previousView !== "followed_artists" || wasViewingFollowedArtist;
+    $("#remote-title").textContent = "已关注画师";
+    $("#remote-description").textContent = "查看你关注的画师和他们的插画。";
+    loadFollowedArtists();
+    return;
+  }
+  if (view === "search") {
+    $("#remote-title").textContent = "搜索 Pixiv";
+    $("#remote-description").textContent = "搜索插画标签或画师，选择作品保存原图到本地图库。";
+    $("#remote-grid").replaceChildren();
+    $(".remote-pagination").hidden = true;
+    if (state.searchQuery || state.searchKind === "artist_works") loadSearch();
+    else showMessage($("#remote-message"), "输入关键词开始搜索；画师搜索也支持主页链接或用户 ID。");
+    return;
+  }
+  if (view === "ranking") {
+    $("#remote-title").textContent = "全站排行榜";
+    $("#remote-description").textContent = "Pixiv 全站插画榜单。";
+    loadRanking();
+    return;
+  }
+  if (view === "discover") {
+    if (!options.preserveDiscover) {
+      state.discoverGeneration++;
+      state.discoverItems = [];
+      state.discoverSeen.clear();
+      state.discoverEmptyBatches = 0;
+    }
+    $("#remote-title").textContent = "为你发现";
+    $("#remote-description").textContent = "每次进入都从 Pixiv 获取新推荐，已推荐或已保存的作品自动跳过。";
+    state.remoteItems = state.discoverItems;
+    $("#remote-grid").className = "art-grid";
+    showMessage($("#remote-message"), "");
+    renderFeed();
+    if (!state.discoverItems.length) {
+      showMessage($("#remote-message"), "正在从 Pixiv 获取还没推荐过的作品…");
+      loadDiscoverBatch();
+    } else maybeLoadDiscover();
+    return;
+  }
+  $("#remote-title").textContent = view === "following" ? "关注画师的新作" : "为你发现";
+  $("#remote-description").textContent = view === "following"
+    ? "来自你在 Pixiv 关注的画师，按发布时间排列。"
+    : "来自 Pixiv 的发现推荐，刷新可看到新的作品。";
+  loadFeed();
+}
+
+function renderFeed(addedItems = null) {
+  const grid = $("#remote-grid");
+  if (!addedItems) grid.replaceChildren();
+  const saved = new Set(state.artworks.map((art) => art.pixiv_id).filter(Boolean));
+  const fragment = document.createDocumentFragment();
+  for (const art of addedItems || state.remoteItems) {
+    const card = document.createElement("article");
+    card.className = "art-item remote-card";
+    const preview = art.thumbnail
+      ? `<img class="art-image" src="/api/preview?url=${encodeURIComponent(art.thumbnail)}" alt="${escapeHtml(art.title)}" loading="lazy">`
+      : '<div class="art-image"></div>';
+    card.innerHTML = `${art.rank ? `<span class="rank-badge">#${Number(art.rank)}</span>` : ""}${preview}<div class="art-info">
+      <div class="art-title" title="${escapeHtml(art.title)}">${escapeHtml(art.title)}</div>
+      <div class="art-artist">${escapeHtml(art.artist || "未知画师")}${art.page_count > 1 ? ` · ${art.page_count} 页` : ""}</div>
+      <div class="art-tags">${art.tags.slice(0, 2).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}</div>
+      <button class="button secondary remote-save-button" ${saved.has(art.id) ? "disabled" : ""}>${saved.has(art.id) ? "已保存" : "保存原图到图库"}</button>
+    </div>`;
+    card.querySelector(".art-image").onclick = () => openRemoteDetail(art);
+    card.querySelector(".art-title").onclick = () => openRemoteDetail(art);
+    card.querySelector(".remote-save-button").onclick = (event) => saveRemote(art, event.currentTarget);
+    fragment.append(card);
+  }
+  grid.append(fragment);
+  $("#remote-page").textContent = `第 ${state.remotePage} 页`;
+  $(".remote-pagination").hidden = state.view === "discover" ||
+    (state.view === "search" && state.searchKind === "artworks" && state.searchSort === "hot");
+  $("#remote-prev").disabled = state.remotePage <= 1;
+  $("#remote-next").disabled = state.remoteLastPage;
+  if (!state.remoteItems.length) {
+    showMessage($("#remote-message"), "暂时没有可显示的插画。");
+  }
+  restoreBrowseScroll();
+}
+
+async function loadFeed() {
+  const view = state.view;
+  const page = state.remotePage;
+  $("#remote-grid").replaceChildren();
+  $("#remote-grid").className = "art-grid";
+  showMessage($("#remote-message"), "正在读取 Pixiv 作品…");
+  if (!state.connected) {
+    showMessage($("#remote-message"), "先点击右上角“连接 Pixiv”，输入自己的 PHPSESSID。");
+    if (!$("#account-dialog").open) $("#account-dialog").showModal();
+    return;
+  }
+  try {
+    const result = await api(`/api/feed?kind=${view}&page=${page}`);
+    if (state.view !== view || state.remotePage !== page) return;
+    state.remoteItems = result.artworks;
+    state.remoteLastPage = result.is_last_page;
+    if (view === "following" && page === 1) {
+      state.followSeenIds = new Set(result.artworks.map((art) => art.id));
+      state.newFollowCount = 0;
+      $("#follow-count").hidden = true;
+    }
+    showMessage($("#remote-message"), "");
+    renderFeed();
+  } catch (error) {
+    showMessage($("#remote-message"), error.message, true);
+  }
+}
+
+async function pollFollowing() {
+  if (!state.connected) return;
+  try {
+    const result = await api("/api/feed?kind=following&page=1");
+    const ids = new Set(result.artworks.map((art) => art.id));
+    if (state.followSeenIds) {
+      const fresh = [...ids].filter((id) => !state.followSeenIds.has(id));
+      if (fresh.length) {
+        state.newFollowCount = fresh.length;
+        $("#follow-count").textContent = fresh.length;
+        $("#follow-count").hidden = false;
+        toast(`关注的画师有 ${fresh.length} 件新作`);
+        if (state.view === "following") {
+          state.remotePage = 1;
+          loadFeed();
+        }
+      }
+    }
+    state.followSeenIds = ids;
+  } catch {
+    // The visible feed reports errors when opened; background checks stay quiet.
+  }
+}
+
+function updateFollowButtons() {
+  for (const button of document.querySelectorAll(".artist-follow-button")) {
+    const uid = button.dataset.artistId;
+    if (!uid) continue;
+    const self = state.followSelfIds.has(uid);
+    const following = state.followStatus.get(uid) === true;
+    button.textContent = self ? "本人账号" : following ? "已关注" : "关注画师";
+    button.disabled = self || following || !state.connected;
+  }
+}
+
+async function checkFollowStatus(uid) {
+  if (!state.connected || !/^\d{1,12}$/.test(String(uid || ""))) return;
+  try {
+    const result = await api(`/api/artist-status?artist_id=${encodeURIComponent(uid)}`);
+    if (result.following && state.followStatus.get(uid) !== true) state.followedListCache.clear();
+    state.followStatus.set(uid, result.following);
+    if (result.is_self) state.followSelfIds.add(uid);
+    else state.followSelfIds.delete(uid);
+    updateFollowButtons();
+  } catch (error) {
+    if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
+      showMessage($("#remote-detail-message"), error.message, true);
+  }
+}
+
+async function followArtist(uid, button, privacy = "public") {
+  if (!state.connected) {
+    toast("请先连接 Pixiv 账号");
+    $("#account-dialog").showModal();
+    return;
+  }
+  if (!/^\d{1,12}$/.test(String(uid || ""))) return toast("缺少有效的 Pixiv 画师 ID");
+  button.disabled = true;
+  button.textContent = "正在同步…";
+  try {
+    const result = await api("/api/artist-follow", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artist_id: uid, privacy })
+    });
+    if (!result.following) throw new Error("Pixiv 尚未确认关注成功。");
+    state.followStatus.set(uid, true);
+    state.followedListCache.clear();
+    updateFollowButtons();
+    const message = result.already_following ? "这位画师已经在你的 Pixiv 关注列表中" : "已同步关注到 Pixiv";
+    toast(message);
+    if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
+      showMessage($("#remote-detail-message"), message);
+  } catch (error) {
+    updateFollowButtons();
+    if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
+      showMessage($("#remote-detail-message"), `${error.message} 可点击“画师主页”在 Pixiv 尝试。`, true);
+    else showMessage($("#remote-message"), error.message, true);
+  }
+}
+
+function setHeaderFollow(uid) {
+  const button = $("#artist-follow-header");
+  button.hidden = !state.connected || !/^\d{1,12}$/.test(String(uid || ""));
+  button.dataset.artistId = button.hidden ? "" : uid;
+  updateFollowButtons();
+  if (!button.hidden) checkFollowStatus(uid);
+}
+
+async function openRemoteDetail(art) {
+  state.remoteSelected = art;
+  $("#remote-detail-title").textContent = art.title;
+  renderRemoteBrowseLinks(art.artist, art.artist_id, art.tags, art.page_count);
+  $("#remote-detail-image").removeAttribute("src");
+  $("#remote-detail-loading").hidden = false;
+  $("#remote-source").href = art.source_url;
+  $("#remote-artist-source").hidden = !/^\d{1,12}$/.test(String(art.artist_id || ""));
+  $("#remote-artist-source").href = $("#remote-artist-source").hidden ? "#" : `https://www.pixiv.net/users/${art.artist_id}`;
+  $("#remote-save").disabled = state.artworks.some((item) => item.pixiv_id === art.id);
+  $("#remote-save").textContent = $("#remote-save").disabled ? "已保存到图库" : "保存原图到图库";
+  const followButton = $("#remote-follow");
+  followButton.hidden = !state.connected || !/^\d{1,12}$/.test(String(art.artist_id || ""));
+  $("#follow-choice").hidden = followButton.hidden;
+  followButton.dataset.artistId = followButton.hidden ? "" : art.artist_id;
+  $("#follow-privacy").value = "public";
+  updateFollowButtons();
+  if (!followButton.hidden) checkFollowStatus(art.artist_id);
+  showMessage($("#remote-detail-message"), "");
+  $("#remote-dialog").showModal();
+  try {
+    const detail = await api(`/api/pixiv/detail?id=${encodeURIComponent(art.id)}`);
+    if (state.remoteSelected?.id !== art.id) return;
+    $("#remote-detail-title").textContent = detail.title;
+    renderRemoteBrowseLinks(detail.artist, detail.artist_id, detail.tags, detail.page_count);
+    $("#remote-artist-source").hidden = !/^\d{1,12}$/.test(String(detail.artist_id || ""));
+    $("#remote-artist-source").href = $("#remote-artist-source").hidden ? "#" : `https://www.pixiv.net/users/${detail.artist_id}`;
+    followButton.dataset.artistId = /^\d{1,12}$/.test(String(detail.artist_id || "")) ? detail.artist_id : "";
+    followButton.hidden = !state.connected || !followButton.dataset.artistId;
+    $("#follow-choice").hidden = followButton.hidden;
+    updateFollowButtons();
+    if (!followButton.hidden) checkFollowStatus(detail.artist_id);
+    if (detail.preview_url) {
+      $("#remote-detail-image").src = `/api/preview?url=${encodeURIComponent(detail.preview_url)}`;
+    }
+    $("#remote-detail-loading").hidden = true;
+  } catch (error) {
+    $("#remote-detail-loading").hidden = true;
+    showMessage($("#remote-detail-message"), error.message, true);
+  }
+}
+
+async function saveRemote(art, button) {
+  button.disabled = true;
+  button.textContent = "正在保存…";
+  showMessage($("#remote-detail-message"), "");
+  try {
+    const result = await api("/api/pixiv/import", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: art.id })
+    });
+    await reload();
+    renderFeed();
+    if (state.remoteSelected?.id === art.id) {
+      $("#remote-save").disabled = true;
+      $("#remote-save").textContent = "已保存到图库";
+      showMessage($("#remote-detail-message"), `已保存 ${result.pages} 张原图到本地图库。`);
+    }
+    toast(`已保存 ${result.pages} 张原图`);
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "保存原图到图库";
+    if ($("#remote-dialog").open && state.remoteSelected?.id === art.id) {
+      showMessage($("#remote-detail-message"), error.message, true);
+    } else {
+      showMessage($("#remote-message"), error.message, true);
+    }
+  }
+}
+
+function updateAccountStatus(connected, saved = false) {
+  state.connected = connected;
+  $("#account-button").textContent = connected ? (saved ? "Pixiv 已记住" : "Pixiv 已连接") : "连接 Pixiv";
+  $("#pixiv-auth").textContent = connected
+    ? (saved ? "Pixiv 会话已在这台电脑加密保存；失效前会自动连接。" : "当前本地服务已连接 Pixiv 账号。")
+    : "未连接 Pixiv。公开作品可能可以导入；关注新作和个性化推荐需要连接账号。";
+  $("#disconnect-button").hidden = !connected;
+}
+
+async function connectAccount() {
+  const cookie = $("#session-cookie").value.trim();
+  const button = $("#connect-button");
+  button.disabled = true;
+  button.textContent = "正在验证…";
+  showMessage($("#account-message"), "正在验证账号并读取关注动态…");
+  try {
+    const result = await api("/api/session", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cookie, remember: $("#remember-session").checked })
+    });
+    $("#session-cookie").value = "";
+    state.followedListCache.clear();
+    state.followStatus.clear();
+    state.followSelfIds.clear();
+    state.followedListPage = 1;
+    state.followedArtist = null;
+    state.remotePage = 1;
+    clearTimeout(state.discoverRetryTimer);
+    state.discoverRetryTimer = null;
+    state.discoverGeneration++;
+    state.discoverItems = [];
+    state.discoverSeen.clear();
+    state.discoverEmptyBatches = 0;
+    updateAccountStatus(true, result.session_saved);
+    showMessage($("#account-message"), result.session_saved
+      ? "连接成功。已用当前 Windows 用户加密保存，下次启动将自动连接。"
+      : "连接成功。此次仅保留在当前服务运行期间。");
+    toast("Pixiv 已连接");
+    if (state.view === "search") {
+      if (state.searchQuery) loadSearch();
+    } else if (state.view === "followed_artists") loadFollowedArtists();
+    else if (state.view === "ranking") loadRanking();
+    else if (state.view === "discover") loadDiscoverBatch();
+    else if (state.view !== "library") loadFeed();
+    else pollFollowing();
+  } catch (error) {
+    showMessage($("#account-message"), error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "连接并验证";
+  }
+}
+
+async function disconnectAccount() {
+  await api("/api/session", { method: "DELETE" });
+  updateAccountStatus(false);
+  state.followSeenIds = null;
+  state.newFollowCount = 0;
+  state.followedListCache.clear();
+  state.followStatus.clear();
+  state.followSelfIds.clear();
+  clearTimeout(state.discoverRetryTimer);
+  state.discoverRetryTimer = null;
+  state.discoverGeneration++;
+  state.discoverItems = [];
+  state.discoverSeen.clear();
+  state.discoverEmptyBatches = 0;
+  $("#follow-count").hidden = true;
+  $("#account-dialog").close();
+  if (state.view !== "library") {
+    $("#remote-grid").replaceChildren();
+    showMessage($("#remote-message"), "已断开 Pixiv 连接。");
+  }
+  toast("Pixiv 已断开");
+}
+
+$("#add-button").onclick = () => openAdd();
+$("#hero-add").onclick = () => openAdd();
+$("#empty-add").onclick = () => openAdd();
+$("#show-all").onclick = () => { state.filter = null; switchView("library"); };
+$("#show-following").onclick = () => switchView("following");
+$("#show-followed-artists").onclick = () => switchView("followed_artists");
+$("#show-discover").onclick = () => switchView("discover");
+$("#show-ranking").onclick = () => switchView("ranking");
+$("#show-pixiv-search").onclick = () => { state.previewReturn = null; switchView("search"); };
+$("#ranking-mode").onchange = (event) => {
+  state.rankingMode = event.target.value;
+  state.remotePage = 1;
+  loadRanking();
+};
+$("#pixiv-search-form").onsubmit = submitPixivSearch;
+$("#pixiv-search-kind").onchange = () => { $("#pixiv-search-order").hidden = $("#pixiv-search-kind").value !== "artworks"; };
+$("#search-back").onclick = () => {
+  if (state.view === "followed_artists") {
+    state.followedArtist = null;
+    state.remotePage = state.followedListPage;
+    state.restoreFollowedScroll = true;
+    loadFollowedArtists();
+  } else if (state.previewReturn) {
+    restoreBrowseOrigin();
+  } else {
+    state.remotePage = 1;
+    state.searchKind = "artists";
+    loadSearch();
+  }
+};
+const loadCurrentRemote = () => state.view === "search" ? loadSearch() :
+  state.view === "followed_artists" ? loadFollowedArtists() :
+  state.view === "ranking" ? loadRanking() :
+  state.view === "discover" ? loadDiscoverBatch() : loadFeed();
+$("#remote-refresh").onclick = () => {
+  if (state.view === "followed_artists") state.followedListCache.clear();
+  loadCurrentRemote();
+};
+$("#remote-prev").onclick = () => { if (state.remotePage > 1) { state.remotePage--; loadCurrentRemote(); } };
+$("#remote-next").onclick = () => { if (!state.remoteLastPage) { state.remotePage++; loadCurrentRemote(); } };
+$("#remote-save").onclick = (event) => {
+  if (state.remoteSelected) saveRemote(state.remoteSelected, event.currentTarget);
+};
+$("#remote-follow").onclick = (event) => followArtist(event.currentTarget.dataset.artistId, event.currentTarget, $("#follow-privacy").value);
+$("#artist-follow-header").onclick = (event) => followArtist(event.currentTarget.dataset.artistId, event.currentTarget);
+$("#bulk-toggle").onclick = () => { state.bulkMode ? exitBulkMode() : (state.bulkMode = true, render()); };
+$("#bulk-cancel").onclick = exitBulkMode;
+$("#bulk-clear").onclick = () => { state.bulkSelected.clear(); render(); };
+$("#bulk-select-visible").onclick = () => {
+  for (const art of filterArtworks()) {
+    if (state.bulkSelected.size >= 500) break;
+    state.bulkSelected.add(art.id);
+  }
+  render();
+  if (filterArtworks().length > 500) toast("一次最多选择 500 件作品");
+};
+$("#bulk-edit").onclick = openBulkDialog;
+$("#bulk-change-artist").onchange = (event) => {
+  $("#bulk-artist").disabled = !event.target.checked;
+  $("#bulk-artist-id").disabled = !event.target.checked;
+};
+$("#bulk-tag-mode").onchange = (event) => { $("#bulk-tags").disabled = event.target.value === "none"; };
+$("#bulk-form").onsubmit = saveBulkChanges;
+$("#account-button").onclick = () => {
+  showMessage($("#account-message"), "");
+  $("#account-dialog").showModal();
+};
+$("#connect-button").onclick = connectAccount;
+$("#disconnect-button").onclick = disconnectAccount;
+$("#search").addEventListener("input", (event) => { state.search = event.target.value; render(); });
+$("#sort").addEventListener("change", render);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !state.connected) return;
+  const uid = $("#remote-dialog").open
+    ? $("#remote-follow").dataset.artistId
+    : $("#artist-follow-header").hidden ? state.pendingProfileArtistId : $("#artist-follow-header").dataset.artistId;
+  state.pendingProfileArtistId = "";
+  if (uid) checkFollowStatus(uid);
+});
+document.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault(); $("#search").focus();
+  }
+});
+for (const dialog of document.querySelectorAll("dialog")) {
+  dialog.querySelector(".close").onclick = () => dialog.close();
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+}
+for (const tab of document.querySelectorAll(".tab")) {
+  tab.onclick = () => { setTab(tab.dataset.tab); showMessage($("#add-message"), ""); };
+}
+$("#drop-zone").onclick = () => $("#file-input").click();
+$("#drop-zone").onkeydown = (event) => {
+  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $("#file-input").click(); }
+};
+$("#file-input").onchange = async (event) => {
+  await uploadFiles(event.target.files);
+  event.target.value = "";
+};
+$("#drop-zone").ondragover = (event) => { event.preventDefault(); $("#drop-zone").classList.add("dragging"); };
+$("#drop-zone").ondragleave = () => $("#drop-zone").classList.remove("dragging");
+$("#drop-zone").ondrop = (event) => {
+  event.preventDefault(); $("#drop-zone").classList.remove("dragging"); uploadFiles(event.dataTransfer.files);
+};
+$("#pixiv-import").onclick = importPixiv;
+$("#pixiv-url").onkeydown = (event) => { if (event.key === "Enter") importPixiv(); };
+$("#detail-form").onsubmit = saveDetail;
+$("#load-tags").onclick = loadPixivTags;
+$("#delete-button").onclick = deleteDetail;
+$("#open-local").onclick = () => openLocalImage(state.selected, state.page, "open");
+$("#reveal-local").onclick = () => openLocalImage(state.selected, state.page, "reveal");
+$("#detail-image").ondblclick = () => openLocalImage(state.selected, state.page, "both");
+$("#previous-page").onclick = () => { state.page--; showPage(); };
+$("#next-page").onclick = () => { state.page++; showPage(); };
+
+if (location.protocol === "file:") {
+  $("#launch-warning").hidden = false;
+  $("#account-button").disabled = true;
+}
+
+const discoverObserver = new IntersectionObserver((entries) => {
+  if (entries.some((entry) => entry.isIntersecting)) maybeLoadDiscover();
+}, { rootMargin: "650px" });
+discoverObserver.observe($("#remote-sentinel"));
+
+function maybeLoadDiscover() {
+  if (state.view !== "discover" || state.discoverLoading || !state.connected) return;
+  const sentinel = $("#remote-sentinel");
+  if (sentinel.getBoundingClientRect().top <= window.innerHeight + 650) loadDiscoverBatch();
+}
+
+function scheduleDiscoverCheck(delay) {
+  clearTimeout(state.discoverRetryTimer);
+  state.discoverRetryTimer = setTimeout(() => {
+    state.discoverRetryTimer = null;
+    maybeLoadDiscover();
+  }, delay);
+}
+
+async function loadDiscoverBatch() {
+  if (state.view !== "discover" || state.discoverLoading || !state.connected) {
+    if (state.view === "discover" && !state.connected) {
+      showMessage($("#remote-message"), "先点击右上角“连接 Pixiv”，才能查看发现推荐。");
+    }
+    return;
+  }
+  state.discoverLoading = true;
+  const generation = state.discoverGeneration;
+  $("#remote-sentinel").textContent = "正在加载更多推荐…";
+  try {
+    const result = await api("/api/feed?kind=discover&page=1");
+    if (state.view !== "discover" || generation !== state.discoverGeneration) return;
+    const addedItems = [];
+    for (const art of result.artworks) {
+      if (state.discoverSeen.has(art.id)) continue;
+      state.discoverSeen.add(art.id);
+      state.discoverItems.push(art);
+      addedItems.push(art);
+    }
+    const added = addedItems.length;
+    state.discoverEmptyBatches = added ? 0 : state.discoverEmptyBatches + 1;
+    state.remoteItems = state.discoverItems;
+    renderFeed(addedItems);
+    showMessage($("#remote-message"), added ? "" : "Pixiv 暂时没有返回未推荐过的作品，停留在底部会稍后重试。", false);
+    $("#remote-sentinel").textContent = added
+      ? `已显示 ${state.discoverItems.length} 件不同作品，继续下滑加载…`
+      : "暂无新的推荐，稍后自动重试…";
+  } catch (error) {
+    if (state.view === "discover") showMessage($("#remote-message"), error.message, true);
+    $("#remote-sentinel").textContent = "加载失败，稍后自动重试…";
+    state.discoverEmptyBatches = Math.max(1, state.discoverEmptyBatches);
+  } finally {
+    state.discoverLoading = false;
+    if (state.view === "discover" && generation === state.discoverGeneration) {
+      const delay = state.discoverEmptyBatches
+        ? Math.min(60000, 15000 * 2 ** Math.min(state.discoverEmptyBatches, 2))
+        : 900;
+      scheduleDiscoverCheck(delay);
+    } else if (state.view === "discover") {
+      scheduleDiscoverCheck(100);
+    }
+  }
+}
+
+function renderRemoteBrowseLinks(name, artistId, tags, pageCount) {
+  const line = $("#remote-detail-artist");
+  line.replaceChildren();
+  if (name || /^\d+$/.test(String(artistId || ""))) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = name || `画师 ${artistId}`;
+    button.title = "查看这位画师的其他插画";
+    button.onclick = () => browsePixivAuthor(artistId, name);
+    line.append(button);
+  } else {
+    line.textContent = "未知画师";
+  }
+  if (pageCount > 1) line.append(document.createTextNode(` · ${pageCount} 页`));
+  const holder = $("#remote-detail-tags");
+  holder.replaceChildren();
+  for (const tag of tags || []) holder.append(createBrowseTag(tag));
+}
+
+async function loadRanking() {
+  const mode = state.rankingMode;
+  const page = state.remotePage;
+  $("#remote-grid").replaceChildren();
+  $("#remote-grid").className = "art-grid";
+  $(".remote-pagination").hidden = true;
+  showMessage($("#remote-message"), "正在读取 Pixiv 排行榜…");
+  try {
+    const result = await api(`/api/ranking?mode=${mode}&page=${page}`);
+    if (state.view !== "ranking" || state.rankingMode !== mode || state.remotePage !== page) return;
+    state.remoteItems = result.artworks;
+    state.remoteLastPage = result.is_last_page;
+    $("#remote-description").textContent = `${$("#ranking-mode").selectedOptions[0].textContent} · ${result.date || "最新榜单"}`;
+    showMessage($("#remote-message"), "");
+    renderFeed();
+  } catch (error) {
+    if (state.view === "ranking") showMessage($("#remote-message"), error.message, true);
+  }
+}
+
+async function openLocalImage(art, page, action) {
+  if (!art || !art.images[page]) return;
+  try {
+    const result = await api(`/api/artworks/${encodeURIComponent(art.id)}/open`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page, action })
+    });
+    toast(action === "reveal" ? "已在文件夹中定位图片" : "已打开本地图片");
+    if (action === "both") showMessage($("#detail-message"), `已打开：${result.path}`);
+  } catch (error) {
+    if ($("#detail-dialog").open) showMessage($("#detail-message"), error.message, true);
+    else toast(error.message);
+  }
+}
+
+async function loadFollowedArtists() {
+  const selected = state.followedArtist;
+  const page = state.remotePage;
+  if (!selected) state.followedListPage = page;
+  $("#remote-grid").replaceChildren();
+  $("#remote-grid").className = "art-grid";
+  $("#search-back").hidden = !selected;
+  $("#search-back").textContent = "← 返回已关注画师";
+  $(".remote-pagination").hidden = true;
+  showMessage($("#remote-message"), selected ? "正在读取画师作品…" : "正在读取已关注画师…");
+  if (!state.connected) {
+    showMessage($("#remote-message"), "请先点击右上角“连接 Pixiv”，才能查看已关注画师。");
+    if (!$("#account-dialog").open) $("#account-dialog").showModal();
+    return;
+  }
+  try {
+    let result = !selected ? state.followedListCache.get(page) : null;
+    if (!result) {
+      const url = selected
+        ? `/api/search?kind=artist_works&artist_id=${encodeURIComponent(selected.id)}&page=${page}`
+        : `/api/followed-artists?page=${page}`;
+      result = await api(url);
+      if (!selected) state.followedListCache.set(page, result);
+    }
+    if (state.view !== "followed_artists" || state.remotePage !== page || state.followedArtist !== selected) return;
+    state.remoteLastPage = result.is_last_page;
+    showMessage($("#remote-message"), "");
+    if (selected) {
+      state.remoteItems = result.artworks;
+      $("#remote-title").textContent = selected.name;
+      $("#remote-description").textContent = `这位画师的 ${result.total} 件插画`;
+      setHeaderFollow(selected.id);
+      renderFeed();
+    } else {
+      setHeaderFollow("");
+      state.artists = result.artists;
+      $("#remote-title").textContent = "已关注画师";
+      $("#remote-description").textContent = `共关注 ${result.total} 位画师，含公开与私密关注。`;
+      renderArtistResults();
+      if (state.restoreFollowedScroll) {
+        state.restoreFollowedScroll = false;
+        requestAnimationFrame(() => window.scrollTo(0, state.followedListScrollY));
+      }
+    }
+  } catch (error) {
+    showMessage($("#remote-message"), error.message, true);
+  }
+}
+
+function renderArtistResults() {
+  const grid = $("#remote-grid");
+  grid.replaceChildren();
+  grid.className = "artist-grid";
+  for (const artist of state.artists) {
+    const card = document.createElement("article");
+    card.className = "artist-card";
+    const avatar = artist.avatar
+      ? `<img class="artist-avatar" src="/api/preview?url=${encodeURIComponent(artist.avatar)}" alt="" loading="lazy">`
+      : '<div class="artist-avatar"></div>';
+    card.innerHTML = `${avatar}<div class="artist-card-info"><strong title="${escapeHtml(artist.name)}">${escapeHtml(artist.name)}</strong><small>用户 ID：${escapeHtml(artist.id)}</small><div class="artist-card-actions"><button class="button secondary artist-works-button">查看作品</button><button class="button secondary artist-follow-button" data-artist-id="${escapeHtml(artist.id)}" ${state.view === "followed_artists" || !state.connected ? "disabled" : ""}>${state.view === "followed_artists" ? "已关注" : "关注画师"}</button><a class="button secondary" href="https://www.pixiv.net/users/${encodeURIComponent(artist.id)}" target="_blank" rel="noopener noreferrer">Pixiv 主页 ↗</a></div></div>`;
+    if (state.view === "followed_artists") state.followStatus.set(artist.id, true);
+    card.querySelector(".artist-follow-button").onclick = (event) => followArtist(artist.id, event.currentTarget);
+    card.querySelector(".artist-card-actions a").onclick = () => { state.pendingProfileArtistId = artist.id; };
+    card.querySelector(".artist-works-button").onclick = () => {
+      if (state.view === "followed_artists") {
+        state.followedListPage = state.remotePage;
+        state.followedListScrollY = window.scrollY;
+        state.followedArtist = artist;
+        state.remotePage = 1;
+        loadFollowedArtists();
+        window.scrollTo(0, 0);
+        return;
+      }
+      captureBrowseOrigin();
+      state.artistId = artist.id;
+      state.artistName = artist.name;
+      state.searchKind = "artist_works";
+      state.remotePage = 1;
+      loadSearch();
+    };
+    grid.append(card);
+  }
+  updateFollowButtons();
+  $("#remote-page").textContent = `第 ${state.remotePage} 页`;
+  $(".remote-pagination").hidden = false;
+  $("#remote-prev").disabled = state.remotePage <= 1;
+  $("#remote-next").disabled = state.remoteLastPage;
+  if (!state.artists.length) showMessage($("#remote-message"), state.view === "followed_artists"
+    ? "尚未关注画师，或当前账号无法查看关注列表。"
+    : "没有找到画师；可尝试输入主页链接或用户 ID。");
+  restoreBrowseScroll();
+}
+
+async function loadSearch() {
+  const kind = state.searchKind;
+  const query = state.searchQuery;
+  const artistId = state.artistId;
+  const sort = state.searchSort;
+  const page = state.remotePage;
+  if (!query && kind !== "artist_works") return;
+  $("#remote-grid").replaceChildren();
+  $("#remote-grid").className = "art-grid";
+  $("#search-back").hidden = kind !== "artist_works" && !state.previewReturn;
+  $("#search-back").textContent = state.previewReturn ? "← 返回之前页面" : "← 返回画师搜索结果";
+  $(".remote-pagination").hidden = true;
+  showMessage($("#remote-message"), "正在搜索 Pixiv…");
+  try {
+    const params = new URLSearchParams({kind, page: String(page)});
+    if (kind === "artist_works") params.set("artist_id", artistId);
+    else params.set("q", query);
+    if (kind === "artworks") params.set("order", sort);
+    const result = await api(`/api/search?${params}`);
+    if (state.view !== "search" || state.searchKind !== kind || state.searchQuery !== query || state.artistId !== artistId || state.searchSort !== sort || state.remotePage !== page) return;
+    state.remoteLastPage = result.is_last_page;
+    if (kind === "artists") {
+      setHeaderFollow("");
+      state.artists = result.artists;
+      $("#remote-description").textContent = `“${query}”的画师搜索结果`;
+      showMessage($("#remote-message"), "");
+      renderArtistResults();
+    } else {
+      setHeaderFollow(kind === "artist_works" ? artistId : "");
+      state.remoteItems = result.artworks;
+      $("#remote-description").textContent = kind === "artist_works"
+        ? `${state.artistName} · 共 ${result.total} 件插画`
+        : sort === "hot"
+          ? `“${query}” · Pixiv 热门精选 ${result.total} 件，数量有限`
+          : `“${query}” · 共 ${result.total} 件插画 · ${sort === "popular_d" ? "热门排序" : "最新排序"}`;
+      showMessage($("#remote-message"), "");
+      renderFeed();
+    }
+  } catch (error) {
+    showMessage($("#remote-message"), error.message, true);
+  }
+}
+
+function submitPixivSearch(event) {
+  event.preventDefault();
+  const query = $("#pixiv-search-query").value.trim();
+  if (!query) {
+    showMessage($("#remote-message"), "请输入搜索词。", true);
+    return;
+  }
+  state.searchKind = $("#pixiv-search-kind").value;
+  state.previewReturn = null;
+  state.searchSort = $("#pixiv-search-order").value;
+  state.searchQuery = query;
+  state.artistId = "";
+  state.artistName = "";
+  state.remotePage = 1;
+  loadSearch();
+}
+reload().catch((error) => {
+  $("#empty").querySelector("h3").textContent = "无法连接本地服务";
+  $("#empty").querySelector("p").textContent = error.message;
+});
+const initialView = new URLSearchParams(location.search).get("view");
+api("/api/status").then((status) => {
+  updateAccountStatus(status.pixiv_cookie_configured, status.session_saved);
+  if (["following", "followed_artists", "discover", "ranking", "search"].includes(initialView)) switchView(initialView);
+  if (status.pixiv_cookie_configured && initialView !== "following") pollFollowing();
+}).catch(() => {});
+setInterval(pollFollowing, 5 * 60 * 1000);
+
+</script>
+</body>
+</html>

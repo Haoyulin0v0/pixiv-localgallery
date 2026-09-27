@@ -1,0 +1,41 @@
+name: Test and release
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - run: python tests/test_follow_bulk.py
+
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - run: python scripts/package_release.py v0.1.0
+      - name: Publish v0.1.0 once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view v0.1.0 >/dev/null 2>&1; then
+            gh release create v0.1.0 dist/pixiv-gallery-v0.1.0.zip \
+              --target "$GITHUB_SHA" \
+              --title "画屿 v0.1.0" \
+              --notes-file RELEASE_NOTES.md
+          fi
