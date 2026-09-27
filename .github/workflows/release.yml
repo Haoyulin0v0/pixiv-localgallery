@@ -28,14 +28,14 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - run: python scripts/package_release.py v0.1.0
-      - name: Publish v0.1.0 once
+      - run: python scripts/package_release.py v0.1.1
+      - name: Publish v0.1.1 once
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v0.1.0 >/dev/null 2>&1; then
-            gh release create v0.1.0 dist/pixiv-gallery-v0.1.0.zip \
+          if ! gh release view v0.1.1 >/dev/null 2>&1; then
+            gh release create v0.1.1 dist/pixiv-gallery-v0.1.1.zip \
               --target "$GITHUB_SHA" \
-              --title "画屿 v0.1.0" \
+              --title "画屿 v0.1.1" \
               --notes-file RELEASE_NOTES.md
           fi
