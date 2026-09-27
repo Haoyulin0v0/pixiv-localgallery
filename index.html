@@ -97,7 +97,7 @@ dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30
         <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索本地图库的标题、画师或标签…" autocomplete="off"><kbd>Ctrl K</kbd></div>
         <div class="topbar-actions"><button id="account-button" class="button secondary">连接 Pixiv</button><button id="add-button" class="button primary"><span>＋</span> 添加插画</button></div>
       </header>
-      <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请先解压整个压缩包，双击同文件夹中的 <strong>start.bat</strong>，保持命令窗口开启，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
+      <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请双击 <strong>pixiv-gallery.exe</strong>（或运行 <strong>start.bat</strong>），保持命令窗口开启，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
 
       <section class="hero" id="hero">
         <div class="hero-copy"><div class="eyebrow">PERSONAL ART LIBRARY</div><h1>让喜欢的插画，<br><em>随时都找得到。</em></h1><p>收集原图，整理 Pixiv 标签，按画师和关键词快速查找。</p><button id="hero-add" class="button hero-button">开始整理 <span>↗</span></button></div>
@@ -212,7 +212,7 @@ const state = {
   rankingMode: "daily",
   previewReturn: null, restorePreviewScroll: null,
   bulkMode: false, bulkSelected: new Set(), followStatus: new Map(), followSelfIds: new Set(),
-  pendingProfileArtistId: ""
+  pendingProfileArtistId: "", webFollowPendingId: ""
 };
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -221,20 +221,24 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => 
 
 async function api(path, options = {}) {
   if (location.protocol === "file:") {
-    throw new Error("当前直接打开了 index.html。请解压整个压缩包，双击 start.bat，并在 http://127.0.0.1:8765 打开图库。");
+    throw new Error("当前直接打开了 index.html。请双击 pixiv-gallery.exe（或运行 start.bat），并在 http://127.0.0.1:8765 打开图库。");
   }
   let response;
   try { response = await fetch(path, options); }
-  catch { throw new Error("无法连接本地服务。请双击 start.bat，保持命令窗口开启，然后访问 http://127.0.0.1:8765。"); }
+  catch { throw new Error("无法连接本地服务。请双击 pixiv-gallery.exe（或运行 start.bat），保持命令窗口开启，然后访问 http://127.0.0.1:8765。"); }
   if (!response.headers.get("Content-Type")?.includes("application/json")) {
     if (response.status === 404 && path.startsWith("/api/")) {
-      throw new Error("正在运行的是旧版本地服务。请关闭所有画屿命令窗口，再双击新版 start.bat；如果已开多个窗口，需要全部关闭。");
+      throw new Error("正在运行的是旧版本地服务。请关闭所有画屿命令窗口，再双击新版 pixiv-gallery.exe 或 start.bat；如果已开多个窗口，需要全部关闭。");
     }
     throw new Error(`本地服务返回了非 JSON 内容（HTTP ${response.status}）。请查看启动服务的命令窗口中的报错。`);
   }
   let result;
   try { result = await response.json(); } catch { throw new Error("本地服务返回了无效数据。"); }
-  if (!response.ok) throw new Error(result.error || `请求失败（${response.status}）。`);
+  if (!response.ok) {
+    const error = new Error(result.error || `请求失败（${response.status}）。`);
+    error.followOnPixiv = result.follow_on_pixiv === true;
+    throw error;
+  }
   return result;
 }
 
@@ -955,10 +959,36 @@ async function checkFollowStatus(uid) {
     if (result.is_self) state.followSelfIds.add(uid);
     else state.followSelfIds.delete(uid);
     updateFollowButtons();
+    if (result.following && state.webFollowPendingId === uid) {
+      state.webFollowPendingId = "";
+      const message = "已在 Pixiv 完成关注，画屿已同步状态";
+      toast(message);
+      if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
+        showMessage($("#remote-detail-message"), message);
+      else showMessage($("#remote-message"), message);
+    }
   } catch (error) {
     if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
       showMessage($("#remote-detail-message"), error.message, true);
   }
+}
+
+function showWebFollowOption(uid, message) {
+  const holder = $("#remote-dialog").open && state.remoteSelected?.artist_id === uid
+    ? $("#remote-detail-message") : $("#remote-message");
+  showMessage(holder, `${message} 在 Pixiv 原站关注后，返回画屿会自动检查状态。`, true);
+  const link = document.createElement("a");
+  link.href = `https://www.pixiv.net/users/${uid}`;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = "打开画师主页并关注 ↗";
+  link.style.marginLeft = "8px";
+  link.style.color = "#e5c5fa";
+  link.onclick = () => {
+    state.webFollowPendingId = uid;
+    state.pendingProfileArtistId = uid;
+  };
+  holder.append(link);
 }
 
 async function followArtist(uid, button, privacy = "public") {
@@ -985,7 +1015,8 @@ async function followArtist(uid, button, privacy = "public") {
       showMessage($("#remote-detail-message"), message);
   } catch (error) {
     updateFollowButtons();
-    if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
+    if (error.followOnPixiv) showWebFollowOption(uid, error.message);
+    else if ($("#remote-dialog").open && state.remoteSelected?.artist_id === uid)
       showMessage($("#remote-detail-message"), `${error.message} 可点击“画师主页”在 Pixiv 尝试。`, true);
     else showMessage($("#remote-message"), error.message, true);
   }
@@ -1216,14 +1247,16 @@ $("#connect-button").onclick = connectAccount;
 $("#disconnect-button").onclick = disconnectAccount;
 $("#search").addEventListener("input", (event) => { state.search = event.target.value; render(); });
 $("#sort").addEventListener("change", render);
-document.addEventListener("visibilitychange", () => {
+function refreshFollowAfterReturn() {
   if (document.visibilityState !== "visible" || !state.connected) return;
-  const uid = $("#remote-dialog").open
+  const uid = state.webFollowPendingId || ($("#remote-dialog").open
     ? $("#remote-follow").dataset.artistId
-    : $("#artist-follow-header").hidden ? state.pendingProfileArtistId : $("#artist-follow-header").dataset.artistId;
+    : $("#artist-follow-header").hidden ? state.pendingProfileArtistId : $("#artist-follow-header").dataset.artistId);
   state.pendingProfileArtistId = "";
   if (uid) checkFollowStatus(uid);
-});
+}
+document.addEventListener("visibilitychange", refreshFollowAfterReturn);
+window.addEventListener("focus", refreshFollowAfterReturn);
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault(); $("#search").focus();
