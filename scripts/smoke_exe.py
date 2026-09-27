@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory() as directory:
         listener.bind(("127.0.0.1", 0))
         port = listener.getsockname()[1]
     env = {**os.environ, "GALLERY_OPEN_BROWSER": "0", "GALLERY_PORT": str(port),
-           "PIXIV_PHPSESSID": ""}
+           "PIXIV_PHPSESSID": "", "PYTHONIOENCODING": "cp1252"}
     process = subprocess.Popen(
         [str(target)], cwd=directory, env=env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -52,3 +52,10 @@ with tempfile.TemporaryDirectory() as directory:
         subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
                        capture_output=True, check=False)
         process.wait(timeout=10)
+        process.stdout.close()
+        for _ in range(25):
+            try:
+                target.unlink()
+                break
+            except PermissionError:
+                time.sleep(0.2)
