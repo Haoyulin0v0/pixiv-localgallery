@@ -22,6 +22,8 @@
 .active-filter[hidden]{display:none}
 .bulk-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:-5px 0 20px;padding:13px;border:1px solid #5a486b;border-radius:10px;background:#27212f;color:#e7d5f5;font-size:12px}.bulk-toolbar[hidden]{display:none}.bulk-toolbar .button{padding:8px 10px}.art-item.bulk-selected{border-color:#d5b7f0;box-shadow:0 0 0 2px #c9a8e277}.bulk-check{position:absolute;top:10px;right:10px;width:26px;height:26px;border:1px solid #d9c6ef;border-radius:7px;background:#17131dcc;display:grid;place-items:center;color:#fff;font-size:18px}.art-item.bulk-mode{position:relative}.bulk-form label{display:block;color:#d0c6d8;font-size:12px;margin:18px 0 8px}.bulk-form input,.bulk-form textarea,.bulk-form select{width:100%;background:#17191e;border:1px solid #48424f;border-radius:8px;color:#fff;padding:10px 12px}.bulk-form textarea{resize:vertical}.bulk-form .bulk-inline{display:flex;align-items:center;gap:8px}.bulk-form .bulk-inline input{width:auto}.bulk-form .button{margin-top:20px}.bulk-form .hint{margin-top:5px}.artist-card-actions{display:flex;gap:7px;flex-wrap:wrap}.artist-follow-button[disabled],#remote-follow[disabled]{opacity:.55;cursor:default}.follow-choice{display:flex;align-items:center;gap:7px;color:#a8a0b0;font-size:11px}.follow-choice select{background:#272a31;border:1px solid #484b54;border-radius:7px;color:#eee;padding:8px}.follow-choice[hidden],#remote-follow[hidden]{display:none}
 .source-input-row{display:flex;gap:7px}.source-input-row input{flex:1}.source-input-row .button{padding:9px 11px}
+.tag-editor{display:flex;align-items:center;flex-wrap:wrap;gap:7px;min-height:45px;padding:7px 9px;background:#17191e;border:1px solid #48424f;border-radius:8px;cursor:text}.tag-editor:focus-within{border-color:#c7a7e0}.tag-editor.is-disabled{opacity:.55;cursor:default}.tag-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;background:#382d45;border:1px solid #6e5281;border-radius:7px;color:#ebd8fa;font-size:12px;max-width:100%;overflow-wrap:anywhere}.tag-chip button{background:none;border:0;color:#c8addc;font-size:16px;line-height:1;padding:0 1px}.tag-chip button:hover{color:#fff}.tag-editor input,.bulk-form .tag-editor input,.detail-side .tag-editor input{flex:1;min-width:140px;width:auto;background:transparent;border:0;border-radius:0;outline:0;box-shadow:none;padding:4px;color:#f6f3ee;font-size:12px}.tag-editor input:focus,.bulk-form .tag-editor input:focus,.detail-side .tag-editor input:focus{border:0;outline:0}.tag-editor input::placeholder{color:#88838e}
+.tag-chips{display:contents}
 #artist-follow-header[hidden],#remote-artist-source[hidden]{display:none}
 dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30px 100px #000a;border-radius:16px;max-width:calc(100vw - 24px)}dialog::backdrop{background:#07080cbb;backdrop-filter:blur(4px)}.modal{width:min(550px,100%);padding:26px}.modal-head{display:flex;justify-content:space-between;align-items:start}.modal-head h2{font-size:23px;margin:5px 0 0}.icon-button{border:0;background:transparent;color:#a9a9b2;font-size:27px;line-height:1;padding:0 3px}.icon-button:hover{color:#fff}.tab-row{display:flex;gap:20px;border-bottom:1px solid #3a3b42;margin:26px 0 22px}.tab{background:transparent;border:0;border-bottom:2px solid transparent;padding:0 2px 12px;color:#9999a3;font-size:13px}.tab.active{color:#e3c4fa;border-color:#d3b4ee}.drop-zone{border:1px dashed #665a72;background:#2b2832;border-radius:12px;padding:28px 16px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:7px;cursor:pointer}.drop-zone:hover,.drop-zone.dragging{background:#3b3045;border-color:#c5a4df}.upload-icon{border-radius:50%;background:#493754;color:#e8cafa;width:38px;height:38px;font-size:24px;display:grid;place-items:center;margin-bottom:6px}.drop-zone strong{font-size:14px}.drop-zone span{font-size:12px;color:#aaa6b1}.drop-zone small{font-size:10px;color:#777681;margin-top:6px}.hint{font-size:11px;color:#94929e;line-height:1.7;margin:16px 1px 0}.tab-panel label,.detail-side label{display:block;font-size:11px;font-weight:700;color:#bcbac4;margin-bottom:8px}.input-row{display:flex;gap:9px}.input-row input,.detail-side input,.detail-side textarea{min-width:0;outline:0;width:100%;background:#17191e;border:1px solid #3b3d45;border-radius:8px;color:#f6f3ee;padding:11px 12px;font-size:12px}.input-row input:focus,.detail-side input:focus,.detail-side textarea:focus{border-color:#c7a7e0}.auth-note{font-size:11px;color:#aaa5b1;margin-top:19px}.message{margin-top:18px;padding:11px;border-radius:8px;font-size:12px;line-height:1.5;background:#294237;color:#c4e8d3}.message.error{background:#493039;color:#ffd2d8}
 .detail-modal{width:min(1000px,calc(100vw - 24px));padding:0}.detail-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);min-height:580px}.preview-area{background:#111318;display:flex;align-items:center;justify-content:center;position:relative;min-height:480px;overflow:hidden}.preview-area img{max-width:100%;max-height:78vh;object-fit:contain}.page-arrow{position:absolute;z-index:2;top:50%;transform:translateY(-50%);font-size:35px;width:38px;height:50px;border:0;background:#111318a8;color:#fff;border-radius:8px}.page-arrow.previous{left:12px}.page-arrow.next{right:12px}.page-arrow[hidden]{display:none}.page-count{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;background:#111318bc;padding:6px 9px;border-radius:6px}.detail-side{padding:27px;display:flex;flex-direction:column}.detail-side form{margin-top:27px}.detail-side form label:not(:first-child){margin-top:18px}.detail-side textarea{resize:vertical}.field-note{display:block;color:#888792;font-size:10px;line-height:1.5;margin-top:6px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:23px}.detail-links{display:flex;gap:15px;margin-top:25px;color:#c9afe0;font-size:11px}.detail-links a:hover{text-decoration:underline}.delete-button{background:transparent;border:0;padding:0;align-self:start;margin-top:auto;color:#9f7984;font-size:11px}.delete-button:hover{color:#ffc3cf}#toast{position:fixed;right:24px;bottom:22px;z-index:10;background:#d9c0f0;color:#271e30;padding:11px 17px;border-radius:8px;font-size:12px;box-shadow:0 10px 32px #0008;display:none}#toast.show{display:block}
@@ -166,7 +168,7 @@ dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30
       <input id="bulk-artist" maxlength="200" placeholder="画师名称；留空可清除" disabled>
       <label for="bulk-artist-id">Pixiv 画师 ID（可选）</label><input id="bulk-artist-id" maxlength="12" inputmode="numeric" placeholder="数字 ID；留空可清除" disabled>
       <label for="bulk-tag-mode">标签操作</label><select id="bulk-tag-mode"><option value="none">不修改标签</option><option value="add">添加标签</option><option value="remove">移除标签</option><option value="replace">替换全部标签</option></select>
-      <label for="bulk-tags">标签</label><textarea id="bulk-tags" rows="4" placeholder="用逗号或换行分隔标签" disabled></textarea>
+      <label for="bulk-tags">标签</label><div class="tag-editor is-disabled" id="bulk-tag-editor"><div class="tag-chips" id="bulk-tag-chips"></div><input id="bulk-tags" type="text" autocomplete="off" placeholder="例如 #tttt #yyy" disabled></div>
       <p class="hint">“添加”保留原标签并去重；“移除”只删指定标签；“替换”会覆盖所选作品的全部标签，留空则清空。</p>
       <button class="button primary" type="submit">保存到所选作品</button>
     </form>
@@ -184,8 +186,8 @@ dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30
           <label for="detail-artist-id">Pixiv 画师 ID</label><input id="detail-artist-id" maxlength="30" placeholder="数字 ID（可选）">
           <label for="detail-source">Pixiv 作品链接</label>
           <div class="source-input-row"><input id="detail-source" placeholder="https://www.pixiv.net/artworks/12345678"><button id="load-tags" class="button secondary" type="button">读取标签</button></div>
-          <label for="detail-tags">标签</label><textarea id="detail-tags" rows="4" placeholder="用逗号或换行分隔标签"></textarea>
-          <span class="field-note">Pixiv 标签可能被用户修改；你也可以添加自己的分类。</span>
+          <label for="detail-tags">标签</label><div class="tag-editor" id="detail-tag-editor"><div class="tag-chips" id="detail-tag-chips"></div><input id="detail-tags" type="text" autocomplete="off" placeholder="例如 #tttt #yyy"></div>
+          <span class="field-note">输入下一个 # 时，前一个标签会变成气泡；按回车或保存可完成最后一个标签。</span>
           <div class="detail-actions"><button class="button primary" type="submit">保存修改</button><button id="open-local" class="button secondary" type="button">打开本地原图</button><button id="reveal-local" class="button secondary" type="button">在文件夹中显示</button><a id="download-link" class="button secondary" download>下载当前原图</a></div>
         </form>
         <div id="detail-browse" class="detail-browse" hidden><div class="detail-browse-title">查看相关 Pixiv 作品</div><button id="detail-browse-artist" class="detail-browse-artist" type="button">画师的其他插画 ↗</button><div id="detail-browse-tags" class="detail-browse-tags"></div></div>
@@ -400,12 +402,79 @@ function exitBulkMode() {
   render();
 }
 
+function createTagEditor(editorSelector, chipsSelector, inputSelector) {
+  const editor = $(editorSelector);
+  const holder = $(chipsSelector);
+  const input = $(inputSelector);
+  let tags = [];
+  const normalize = (value) => String(value ?? "").trim().replace(/^[#＃]+\s*/, "").trim();
+  const add = (value) => {
+    const tag = normalize(value);
+    if (!tag || tags.includes(tag)) return;
+    if (tags.length >= 100) { toast("最多保存 100 个标签"); return; }
+    tags.push(tag);
+  };
+  const renderChips = () => {
+    holder.replaceChildren();
+    for (const tag of tags) {
+      const chip = document.createElement("span");
+      chip.className = "tag-chip";
+      chip.append(document.createTextNode(`#${tag}`));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.setAttribute("aria-label", `移除标签 ${tag}`);
+      remove.textContent = "×";
+      remove.onclick = () => { tags = tags.filter((item) => item !== tag); renderChips(); input.focus(); };
+      chip.append(remove);
+      holder.append(chip);
+    }
+  };
+  const commit = () => {
+    add(input.value);
+    input.value = "";
+    renderChips();
+  };
+  const processInput = () => {
+    if (!/[#＃,，\n]/.test(input.value)) return;
+    const parts = input.value.split(/[#＃,，\n]/);
+    for (const part of parts.slice(0, -1)) add(part);
+    input.value = `#${parts.at(-1).trimStart()}`;
+    renderChips();
+  };
+  input.addEventListener("input", (event) => { if (!event.isComposing) processInput(); });
+  input.addEventListener("compositionend", processInput);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); commit(); }
+    else if (event.key === "Backspace" && !input.value && tags.length) {
+      event.preventDefault();
+      input.value = `#${tags.pop()}`;
+      renderChips();
+    }
+  });
+  input.addEventListener("blur", commit);
+  editor.addEventListener("click", (event) => { if (event.target === editor || event.target === holder) input.focus(); });
+  return {
+    setTags(values) {
+      tags = [];
+      for (const value of values || []) add(value);
+      input.value = "";
+      renderChips();
+    },
+    getTags() { commit(); return [...tags]; },
+    setDisabled(disabled) { input.disabled = disabled; editor.classList.toggle("is-disabled", disabled); }
+  };
+}
+
+const detailTagEditor = createTagEditor("#detail-tag-editor", "#detail-tag-chips", "#detail-tags");
+const bulkTagEditor = createTagEditor("#bulk-tag-editor", "#bulk-tag-chips", "#bulk-tags");
+
 function openBulkDialog() {
   if (!state.bulkSelected.size) return;
   $("#bulk-form").reset();
   $("#bulk-artist").disabled = true;
   $("#bulk-artist-id").disabled = true;
-  $("#bulk-tags").disabled = true;
+  bulkTagEditor.setTags([]);
+  bulkTagEditor.setDisabled(true);
   $("#bulk-dialog-count").textContent = `已选 ${state.bulkSelected.size} 件作品；修改只影响本地图库。`;
   showMessage($("#bulk-message"), "");
   $("#bulk-dialog").showModal();
@@ -418,7 +487,7 @@ async function saveBulkChanges(event) {
     name: $("#bulk-artist").value.trim(), id: $("#bulk-artist-id").value.trim()
   };
   if ($("#bulk-tag-mode").value !== "none") payload.tags = {
-    mode: $("#bulk-tag-mode").value, values: $("#bulk-tags").value
+    mode: $("#bulk-tag-mode").value, values: bulkTagEditor.getTags()
   };
   if (!payload.artist && !payload.tags) return showMessage($("#bulk-message"), "请选择要修改的画师或标签。", true);
   const button = $("#bulk-form button[type=submit]");
@@ -505,7 +574,7 @@ function openDetail(art) {
   $("#detail-artist").value = art.artist;
   $("#detail-artist-id").value = art.artist_id;
   $("#detail-source").value = art.source_url;
-  $("#detail-tags").value = art.tags.join("，");
+  detailTagEditor.setTags(art.tags);
   $("#source-link").hidden = !art.source_url;
   $("#source-link").href = art.source_url || "#";
   $("#artist-link").hidden = !/^\d+$/.test(art.artist_id);
@@ -520,7 +589,7 @@ function openDetail(art) {
 function renderLocalBrowseLinks() {
   const name = $("#detail-artist").value.trim();
   const id = $("#detail-artist-id").value.trim();
-  const tags = [...new Set($("#detail-tags").value.split(/[,，\n]+/).map((tag) => tag.trim()).filter(Boolean))];
+  const tags = detailTagEditor.getTags();
   const artistButton = $("#detail-browse-artist");
   artistButton.hidden = !name && !/^\d+$/.test(id);
   artistButton.textContent = name ? `查看 ${name} 的其他插画 ↗` : "查看画师的其他插画 ↗";
@@ -638,7 +707,7 @@ async function saveDetail(event) {
     artist: $("#detail-artist").value,
     artist_id: $("#detail-artist-id").value,
     source_url: $("#detail-source").value,
-    tags: $("#detail-tags").value
+    tags: detailTagEditor.getTags()
   };
   try {
     await api(`/api/artworks/${encodeURIComponent(art.id)}`, {
@@ -683,7 +752,7 @@ async function loadPixivTags() {
     $("#detail-artist").value = item.artist;
     $("#detail-artist-id").value = item.artist_id;
     $("#detail-source").value = item.source_url;
-    $("#detail-tags").value = item.tags.join("，");
+    detailTagEditor.setTags(item.tags);
     renderLocalBrowseLinks();
     showMessage($("#detail-message"), "已读取 Pixiv 信息。点击“保存修改”即可保存到图库。");
   } catch (error) {
@@ -1137,7 +1206,7 @@ $("#bulk-change-artist").onchange = (event) => {
   $("#bulk-artist").disabled = !event.target.checked;
   $("#bulk-artist-id").disabled = !event.target.checked;
 };
-$("#bulk-tag-mode").onchange = (event) => { $("#bulk-tags").disabled = event.target.value === "none"; };
+$("#bulk-tag-mode").onchange = (event) => { bulkTagEditor.setDisabled(event.target.value === "none"); };
 $("#bulk-form").onsubmit = saveBulkChanges;
 $("#account-button").onclick = () => {
   showMessage($("#account-message"), "");
