@@ -33,7 +33,8 @@ with tempfile.TemporaryDirectory() as directory:
         deadline = time.monotonic() + 25
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                raise AssertionError(f"EXE exited early with code {process.returncode}")
+                output = process.stdout.read().decode("utf-8", "replace")
+                raise AssertionError(f"EXE exited early with code {process.returncode}: {output[-3000:]}")
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/status", timeout=1) as response:
                     assert response.status == 200
