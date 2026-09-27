@@ -134,6 +134,26 @@ with tempfile.TemporaryDirectory() as temp:
         gallery.pixiv_follow_artist("42")
         raise AssertionError("400 rejection accepted")
     except ValueError as error:
+        assert isinstance(error, gallery.PixivFollowWebRequired)
         assert "Captcha required" in str(error)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), gallery.Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        follow_request = urllib.request.Request(
+            f"http://127.0.0.1:{server.server_port}/api/artist-follow",
+            data=json.dumps({"artist_id": "42"}).encode(), method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            urllib.request.urlopen(follow_request)
+            raise AssertionError("Rejected follow returned success")
+        except urllib.error.HTTPError as error:
+            assert error.code == 409
+            assert json.load(error)["follow_on_pixiv"] is True
+    finally:
+        server.shutdown()
+        server.server_close()
 
 print("Follow request and atomic bulk edits passed")

@@ -9,6 +9,7 @@ import re
 import socket
 import sqlite3
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -22,7 +23,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", ROOT))
 DATA = ROOT / "data"
 IMAGES = DATA / "images"
 DATABASE = DATA / "library.sqlite3"
@@ -461,6 +463,10 @@ def pixiv_artist_status(value):
             "following": body["isFollowed"], "is_self": uid == current_uid}
 
 
+class PixivFollowWebRequired(ValueError):
+    """The user's browser must complete a follow that Pixiv rejected here."""
+
+
 def pixiv_follow_artist(value, privacy="public"):
     uid = validated_artist_id(value)
     if privacy not in {"public", "private"}:
@@ -500,10 +506,10 @@ def pixiv_follow_artist(value, privacy="public"):
                 if isinstance(message, str):
                     message = re.sub(r"[A-Za-z0-9_-]{24,}", "[已隐藏]", message).strip()
                     if message and len(message) <= 200 and "<" not in message:
-                        raise ValueError(f"Pixiv 拒绝关注请求（HTTP 400）：{message}") from exc
+                        raise PixivFollowWebRequired(f"Pixiv 拒绝了程序的关注请求（HTTP 400：{message}）。请到画师主页完成关注。") from exc
             except (json.JSONDecodeError, UnicodeError):
                 pass
-            raise ValueError("Pixiv 拒绝关注请求（HTTP 400）。可能需要在 Pixiv 网页完成验证。") from exc
+            raise PixivFollowWebRequired("Pixiv 拒绝了程序的关注请求（HTTP 400）。请到画师主页完成关注。") from exc
         raise ValueError(f"Pixiv 关注请求失败：HTTP {exc.code}。") from exc
     except urllib.error.URLError as exc:
         raise ValueError(f"无法连接 Pixiv：{exc.reason}") from exc
@@ -884,7 +890,7 @@ class Handler(BaseHTTPRequestHandler):
             mime = {".jpg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif"}[ext]
             self.serve_file(IMAGES / name, mime)
         elif path in ("/", "/index.html"):
-            self.serve_file(ROOT / "index.html", "text/html; charset=utf-8")
+            self.serve_file(RESOURCE_ROOT / "index.html", "text/html; charset=utf-8")
         else:
             self.send_error(404)
 
@@ -985,6 +991,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, "path": str(image)})
             else:
                 self.send_error(404)
+        except PixivFollowWebRequired as exc:
+            self.send_json(409, {"error": str(exc), "follow_on_pixiv": True})
         except (ValueError, json.JSONDecodeError) as exc:
             self.send_json(400, {"error": str(exc)})
         except Exception as exc:
@@ -1070,13 +1078,20 @@ class LocalHTTPServer(ThreadingHTTPServer):
 
 
 if __name__ == "__main__":
+    try:
+        port = int(os.environ.get("GALLERY_PORT", "8765"))
+        if not 0 <= port <= 65535:
+            raise ValueError
+    except ValueError as exc:
+        raise SystemExit("GALLERY_PORT must be a number from 0 to 65535.") from exc
     connection().close()
     try:
-        server = LocalHTTPServer(("127.0.0.1", 8765), Handler)
+        server = LocalHTTPServer(("127.0.0.1", port), Handler)
     except OSError as exc:
-        raise SystemExit(f"Gallery could not start: port 8765 is in use. Close all earlier gallery command windows and try again. Details: {exc}") from exc
-    print("插画图库已启动：http://127.0.0.1:8765")
+        raise SystemExit(f"Gallery could not start: port {port} is in use. Close all earlier gallery command windows and try again. Details: {exc}") from exc
+    address = f"http://127.0.0.1:{server.server_port}"
+    print(f"插画图库已启动：{address}")
     print("按 Ctrl+C 停止。图片与数据库保存在 data 文件夹。")
-    if os.environ.get("GALLERY_OPEN_BROWSER") == "1":
-        Timer(0.7, lambda: webbrowser.open("http://127.0.0.1:8765")).start()
+    if os.environ.get("GALLERY_OPEN_BROWSER", "1" if getattr(sys, "frozen", False) else "0") == "1":
+        Timer(0.7, lambda: webbrowser.open(address)).start()
     server.serve_forever()
