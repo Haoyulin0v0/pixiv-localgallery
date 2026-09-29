@@ -17,7 +17,7 @@ import urllib.request
 import uuid
 import webbrowser
 from ctypes import wintypes
-from threading import Timer
+from threading import Timer, RLock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from html.parser import HTMLParser
 from pathlib import Path
@@ -32,6 +32,75 @@ SESSION_FILE = DATA / "pixiv_session.bin"
 MAX_UPLOAD = 60 * 1024 * 1024
 PIXIV_RE = re.compile(r"(?:pixiv\.net/(?:[^/]+/)?artworks/|^)(\d{5,12})(?:\D|$)")
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif"}
+APPEARANCE_DEFAULTS = {"accent": "#cfb5f0", "background": "#111318", "overlay": 72}
+APPEARANCE_LOCK = RLock()
+MAX_WALLPAPER = 20 * 1024 * 1024
+
+
+def load_appearance():
+    """Settings live beside the library, independent of the WebView's local port."""
+    with APPEARANCE_LOCK:
+        try:
+            saved = json.loads((DATA / "appearance.json").read_text(encoding="utf-8"))
+            result = validate_appearance(saved)
+        except (OSError, ValueError, TypeError, AttributeError):
+            saved, result = {}, dict(APPEARANCE_DEFAULTS)
+        name = saved.get("wallpaper", "")
+        if isinstance(name, str) and re.fullmatch(r"wallpaper_[a-f0-9]{32}\.(jpg|png|gif|webp|avif)", name):
+            if (DATA / "appearance" / name).is_file():
+                result["wallpaper"] = name
+        result.setdefault("wallpaper", "")
+        result["wallpaper_url"] = "/api/appearance/wallpaper?v=" + result["wallpaper"] if result["wallpaper"] else ""
+        return result
+
+
+def validate_appearance(values):
+    if not isinstance(values, dict):
+        raise ValueError("外观设置格式无效。")
+    result = {}
+    for key in ("accent", "background"):
+        value = values.get(key, APPEARANCE_DEFAULTS[key])
+        if not isinstance(value, str) or not re.fullmatch(r"#[a-fA-F0-9]{6}", value):
+            raise ValueError("请选择有效的颜色。")
+        result[key] = value.lower()
+    overlay = values.get("overlay", APPEARANCE_DEFAULTS["overlay"])
+    if type(overlay) is not int or not 0 <= overlay <= 95:
+        raise ValueError("壁纸遮罩应在 0% 至 95% 之间。")
+    result["overlay"] = overlay
+    if "remove_wallpaper" in values and type(values["remove_wallpaper"]) is not bool:
+        raise ValueError("壁纸设置无效。")
+    return result
+
+
+def save_appearance(values, image=None, filename=""):
+    result = validate_appearance(values)
+    ext = image_extension(filename, image) if image is not None else None
+    with APPEARANCE_LOCK:
+        previous = load_appearance()["wallpaper"]
+        name = "wallpaper_" + uuid.uuid4().hex + ext if ext else previous
+        if values.get("remove_wallpaper") and image is None:
+            name = ""
+        DATA.mkdir(parents=True, exist_ok=True)
+        directory = DATA / "appearance"
+        temporary = DATA / ("appearance_" + uuid.uuid4().hex + ".tmp")
+        try:
+            if image is not None:
+                directory.mkdir(exist_ok=True)
+                (directory / name).write_bytes(image)
+            temporary.write_text(json.dumps({**result, "wallpaper": name}), encoding="utf-8")
+            temporary.replace(DATA / "appearance.json")
+        except Exception:
+            if image is not None:
+                (directory / name).unlink(missing_ok=True)
+            raise
+        finally:
+            temporary.unlink(missing_ok=True)
+        if previous and previous != name:
+            try:
+                (directory / previous).unlink(missing_ok=True)
+            except OSError:
+                pass  # The committed settings remain valid if an old file is locked.
+        return load_appearance()
 
 
 class DataBlob(ctypes.Structure):
@@ -753,7 +822,22 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
-        if path == "/api/artworks":
+        if path == "/api/appearance":
+            self.send_json(200, load_appearance())
+        elif path == "/api/appearance/wallpaper":
+            with APPEARANCE_LOCK:
+                name = load_appearance()["wallpaper"]
+                if not name:
+                    self.send_error(404)
+                    return
+                mime = {".jpg": "image/jpeg", ".png": "image/png", ".gif": "image/gif",
+                        ".webp": "image/webp", ".avif": "image/avif"}[Path(name).suffix]
+                self.serve_file(DATA / "appearance" / name, mime)
+        elif path in ("/favicon.ico", "/assets/app.ico", "/assets/app.svg"):
+            name = "app.svg" if path.endswith(".svg") else "app.ico"
+            self.serve_file(RESOURCE_ROOT / "assets" / name,
+                            "image/svg+xml" if name.endswith(".svg") else "image/x-icon")
+        elif path == "/api/artworks":
             with connection() as db:
                 rows = db.execute("SELECT * FROM artworks ORDER BY created_at DESC").fetchall()
             self.send_json(200, {"artworks": [public_record(row) for row in rows]})
@@ -855,7 +939,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urllib.parse.urlparse(self.path).path
         try:
-            if path == "/api/session":
+            if path == "/api/appearance":
+                self.send_json(200, save_appearance(self.read_json()))
+            elif path == "/api/appearance/wallpaper":
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                values = {key: query.get(key, [APPEARANCE_DEFAULTS[key]])[0]
+                          for key in ("accent", "background", "overlay")}
+                values["overlay"] = int(values["overlay"])
+                validate_appearance(values)
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= MAX_WALLPAPER:
+                    raise ValueError("壁纸为空或超过 20 MB。")
+                image = self.rfile.read(size)
+                self.send_json(200, save_appearance(values, image, query.get("filename", [""])[0]))
+            elif path == "/api/session":
                 global SESSION_COOKIE
                 payload = self.read_json()
                 cookie = str(payload.get("cookie", "")).strip()

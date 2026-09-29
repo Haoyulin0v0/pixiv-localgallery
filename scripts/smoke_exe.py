@@ -24,6 +24,7 @@ try:
     if SOURCE:
         for name in ("desktop.py", "server.py", "index.html"):
             shutil.copy2(ROOT / name, directory / name)
+        shutil.copytree(ROOT / "assets", directory / "assets")
         command = [sys.executable, str(directory / "desktop.py"), "--smoke-test"]
     else:
         target = directory / EXE.name

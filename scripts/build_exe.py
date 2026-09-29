@@ -13,7 +13,9 @@ if os.name != "nt":
 command = [
     sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onefile",
     "--windowed", "--noupx", "--name", "pixiv-gallery",
+    "--icon", str(ROOT / "assets" / "app.ico"),
     "--add-data", f"{ROOT / 'index.html'}{os.pathsep}.",
+    "--add-data", f"{ROOT / 'assets'}{os.pathsep}assets",
     "--distpath", str(ROOT / "dist"),
     "--workpath", str(ROOT / "build" / "pyinstaller"),
     "--specpath", str(ROOT / "build"),
