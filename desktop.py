@@ -4,6 +4,7 @@ import ctypes
 import hashlib
 import json
 import sys
+import time
 import traceback
 from threading import Thread
 
@@ -75,6 +76,22 @@ def run():
                     if (not result or result.get("tags") != ["one", "two"]
                             or not all(result.get(key) for key in ("gallery", "appearance", "icon"))):
                         raise RuntimeError(f"WebView page verification failed: {result}")
+                    window.evaluate_js("switchView('search'); switchView('library'); history.back();")
+                    deadline = time.monotonic() + 3
+                    while time.monotonic() < deadline:
+                        if window.evaluate_js("state.view === 'search' && !navigationPending"):
+                            break
+                        time.sleep(0.05)
+                    else:
+                        raise RuntimeError("Native browser history did not restore the search view")
+                    window.evaluate_js("document.activeElement?.blur(); document.dispatchEvent(new KeyboardEvent('keydown', {key:'u',bubbles:true,cancelable:true}));")
+                    deadline = time.monotonic() + 3
+                    while time.monotonic() < deadline:
+                        if window.evaluate_js("state.view === 'library' && !navigationPending"):
+                            break
+                        time.sleep(0.05)
+                    else:
+                        raise RuntimeError("The U shortcut did not restore the library view")
                     (gallery.ROOT / "webview-smoke.json").write_text(
                         json.dumps({"ok": True, "port": service.server_port}), encoding="utf-8")
                 except Exception as exc:
