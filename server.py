@@ -17,7 +17,7 @@ import urllib.request
 import uuid
 import webbrowser
 from ctypes import wintypes
-from threading import Lock, Timer
+from threading import Timer
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from html.parser import HTMLParser
 from pathlib import Path
@@ -102,7 +102,6 @@ class SameHostRedirect(urllib.request.HTTPRedirectHandler):
 
 
 PIXIV_OPENER = urllib.request.build_opener(SameHostRedirect)
-DISCOVERY_LOCK = Lock()
 
 
 def connection():
@@ -122,14 +121,6 @@ def connection():
             images TEXT NOT NULL DEFAULT '[]',
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
-        )"""
-    )
-    db.execute(
-        """CREATE TABLE IF NOT EXISTS discovery_seen (
-            user_id TEXT NOT NULL,
-            pixiv_id TEXT NOT NULL,
-            first_shown_at INTEGER NOT NULL,
-            PRIMARY KEY (user_id, pixiv_id)
         )"""
     )
     db.commit()
@@ -255,7 +246,7 @@ def pixiv_feed(kind, page=1):
     if not SESSION_COOKIE:
         raise ValueError("请先连接 Pixiv 账号。")
     if kind == "discover":
-        return pixiv_discover_fresh()
+        return pixiv_discover()
     if kind == "following":
         url = f"https://www.pixiv.net/ajax/follow_latest/illust?mode=all&p={page}"
     else:
@@ -276,62 +267,22 @@ def pixiv_feed(kind, page=1):
     }
 
 
-def pixiv_discover_fresh():
-    uid = pixiv_current_user_id()
+def pixiv_discover():
     selected = []
     selected_ids = set()
     url = "https://www.pixiv.net/ajax/discovery/artworks?mode=all&limit=60"
-    with DISCOVERY_LOCK:
-        db = connection()
-        try:
-            for _ in range(3):
-                try:
-                    body = pixiv_json(url)
-                except ValueError:
-                    if selected:
-                        break
-                    raise
-                if not isinstance(body, dict):
-                    raise ValueError("Pixiv 推荐内容为空。")
-                thumbnails = body.get("thumbnails") or {}
-                source = thumbnails.get("illust") if isinstance(thumbnails, dict) else None
-                if not isinstance(source, list):
-                    raise ValueError("Pixiv 推荐格式已变化。")
-                items = [item for raw in source if (item := normalize_feed_item(raw))]
-                ids = [item["id"] for item in items]
-                if not ids:
-                    continue
-                placeholders = ",".join("?" for _ in ids)
-                seen = {
-                    row["pixiv_id"] for row in db.execute(
-                        f"SELECT pixiv_id FROM discovery_seen WHERE user_id=? AND pixiv_id IN ({placeholders})",
-                        [uid, *ids],
-                    )
-                }
-                seen.update(
-                    row["pixiv_id"] for row in db.execute(
-                        f"SELECT pixiv_id FROM artworks WHERE pixiv_id IN ({placeholders})",
-                        ids,
-                    )
-                )
-                for item in items:
-                    if item["id"] in seen or item["id"] in selected_ids:
-                        continue
-                    selected.append(item)
-                    selected_ids.add(item["id"])
-                    if len(selected) >= 30:
-                        break
-                if len(selected) >= 30:
-                    break
-            if selected:
-                now = int(time.time())
-                with db:
-                    db.executemany(
-                        "INSERT OR IGNORE INTO discovery_seen VALUES (?,?,?)",
-                        [(uid, item["id"], now) for item in selected],
-                    )
-        finally:
-            db.close()
+    body = pixiv_json(url)
+    if not isinstance(body, dict):
+        raise ValueError("Pixiv 推荐内容为空。")
+    thumbnails = body.get("thumbnails") or {}
+    source = thumbnails.get("illust") if isinstance(thumbnails, dict) else None
+    if not isinstance(source, list):
+        raise ValueError("Pixiv 推荐格式已变化。")
+    for raw in source:
+        item = normalize_feed_item(raw)
+        if item and item["id"] not in selected_ids:
+            selected.append(item)
+            selected_ids.add(item["id"])
     return {"artworks": selected, "page": 1, "is_last_page": False}
 
 
@@ -742,6 +693,10 @@ def image_extension(name, data):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        if sys.stderr is not None:
+            super().log_message(format, *args)
+
     def local_origin_ok(self):
         origin = self.headers.get("Origin")
         if not origin:

@@ -12,12 +12,12 @@ if os.name != "nt":
 
 command = [
     sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onefile",
-    "--console", "--noupx", "--name", "pixiv-gallery",
+    "--windowed", "--noupx", "--name", "pixiv-gallery",
     "--add-data", f"{ROOT / 'index.html'}{os.pathsep}.",
     "--distpath", str(ROOT / "dist"),
     "--workpath", str(ROOT / "build" / "pyinstaller"),
     "--specpath", str(ROOT / "build"),
-    str(ROOT / "server.py"),
+    str(ROOT / "desktop.py"),
 ]
 subprocess.run(command, check=True, cwd=ROOT)
 output = ROOT / "dist" / "pixiv-gallery.exe"
