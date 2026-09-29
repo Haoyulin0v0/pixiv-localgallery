@@ -37,6 +37,8 @@ python server.py
 11. 在“搜索 Pixiv → 画师”的结果卡片、画师作品页，或作品预览里点击“关注画师”，会使用当前连接的账号尝试同步关注到 Pixiv。作品预览可先选择“公开”或“私密”；其他位置默认公开。程序会从当前登录的 Pixiv 页面读取认证令牌，提交后再确认关注状态；成功后“已关注画师”列表缓存会更新。若 Pixiv 拒绝程序请求，页面会显示“打开画师主页并关注”链接；在 Pixiv 原站点击关注，返回画屿后会自动检查并同步状态。网页关注的公开/私密设置以 Pixiv 页面上的选择为准。
 12. 在本地图库点“批量编辑”，选择作品或“全选当前结果”，再点“修改画师 / 标签”。可以统一填写画师名称与 Pixiv 画师 ID，也可以用同样的 `#` 分隔输入方式对标签执行添加、移除或替换。批量修改只更新本地图库的元数据，不会修改 Pixiv 上的作品或文件本身；一次最多处理 500 件作品。
 
+13. 点击右上角“外观”，可自定义主题色、背景色，选择本地图片作为壁纸并调节遮罩。提供暮色紫、海岛绿、暖纸白三种预设，深浅背景会自动调整文字颜色。修改即时预览，点击“保存外观”后持久保存；直接关闭设置会取消未保存的预览。“移除壁纸”和“恢复默认”也需要保存后生效。壁纸支持 JPG、PNG、GIF、WebP、AVIF，最大 20 MB，复制保存在图库的 `data/appearance/` 中，原文件移动不影响已保存的壁纸。
+
 ### Pixiv 登录 Cookie
 
 部分公开作品可以直接导入。关注新作和个性化推荐需要登录状态。可在浏览器开发者工具的“应用程序/存储 → Cookies → pixiv.net”中找到已登录账号的 `PHPSESSID`，然后在页面右上角输入其**值**。默认勾选“在这台电脑记住连接”：程序会使用 Windows 当前用户的加密功能，把会话保存在 `data/pixiv_session.bin`，下次启动自动读取。取消勾选则只在本次运行期间使用。点击“断开连接”会清除内存中的会话及保存文件。**不要把 Cookie 发给别人，也不要把它写入项目文件或截图公开。**
@@ -57,12 +59,13 @@ python server.py
 ```powershell
 python tests/test_follow_bulk.py
 python tests/test_discovery.py
+python tests/test_appearance.py
 ```
 
 生成与 Release 相同的代码下载包：
 
 ```powershell
-python scripts/package_release.py v0.3.0
+python scripts/package_release.py v0.4.0
 ```
 
 在 Windows 源码仓库中安装 PyInstaller 后，可生成单文件 EXE：
@@ -73,11 +76,11 @@ python scripts/build_exe.py
 python scripts/smoke_exe.py
 ```
 
-代码下载包包含网页、本地服务、桌面入口、桌面依赖说明、浏览器版启动器和使用说明；EXE 内嵌网页、本地服务及桌面窗口依赖。两种包都不会包含 `data/` 中的 Cookie、数据库或图片。
+代码下载包包含网页、本地服务、桌面入口、应用图标、桌面依赖说明、浏览器版启动器和使用说明；EXE 内嵌网页、图标、本地服务及桌面窗口依赖。两种包都不会包含 `data/` 中的 Cookie、数据库、壁纸或图片。
 
 ## 数据与限制
 
-- `data/library.sqlite3` 保存标题、画师、标签和图片文件名；`data/images/` 保存原图。桌面窗口的浏览器缓存保存在 `data/webview/`。备份时复制整个 `data` 文件夹。加密会话文件通常只能由同一台电脑的同一 Windows 用户解密；移到另一台电脑后需重新连接 Pixiv。
+- `data/library.sqlite3` 保存标题、画师、标签和图片文件名；`data/images/` 保存原图。`data/appearance.json` 保存外观设置，`data/appearance/` 保存壁纸，浏览器版与桌面版共用。桌面窗口的浏览器缓存保存在 `data/webview/`。备份时复制整个 `data` 文件夹。加密会话文件通常只能由同一台电脑的同一 Windows 用户解密；移到另一台电脑后需重新连接 Pixiv。
 - Pixiv 导入、关注动态和发现推荐使用其网页内部接口，并非官方对第三方开放的稳定 API。Pixiv 改动接口、登录方式或访问策略时，这些功能可能失效。动图暂不支持。
 - Pixiv 可能要求浏览器完成关注验证，仅用 Cookie 和认证令牌发送请求仍会被拒绝。程序会显示 Pixiv 画师主页入口，并在你从 Pixiv 返回后检查实际关注状态；不会把未确认的请求显示为“已关注”。[Pixiv 官方帮助](https://www.pixiv.help/hc/en-us/articles/235596967-What-is-following)说明公开关注可被他人看到，私密关注不会公开显示。
 - [Pixiv 官方帮助](https://www.pixiv.help/hc/zh-cn/articles/34189864850073-%E4%BB%80%E4%B9%88%E6%98%AF%E5%8F%91%E7%8E%B0%E5%88%86%E9%A1%B5)说明，发现页会参考浏览记录、热门标签等。程序直接使用 Pixiv 的发现结果和顺序，不自行推断其内部推荐算法。该接口没有稳定的翻页游标，连续请求可能重复；程序每次进入都会刷新，但不能保证 Pixiv 每次提供不同作品。

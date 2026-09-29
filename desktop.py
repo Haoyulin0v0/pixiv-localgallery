@@ -68,9 +68,12 @@ def run():
                       input.value = '#one #two';
                       input.dispatchEvent(new Event('input', {bubbles:true}));
                       return {title: document.title, tags: detailTagEditor.getTags(),
-                        gallery: !!document.querySelector('#show-discover')};
+                        gallery: !!document.querySelector('#show-discover'),
+                        appearance: !!document.querySelector('#appearance-button'),
+                        icon: document.querySelector('.brand-icon').naturalWidth > 0};
                     })()""")
-                    if not result or result.get("tags") != ["one", "two"] or not result.get("gallery"):
+                    if (not result or result.get("tags") != ["one", "two"]
+                            or not all(result.get(key) for key in ("gallery", "appearance", "icon"))):
                         raise RuntimeError(f"WebView page verification failed: {result}")
                     (gallery.ROOT / "webview-smoke.json").write_text(
                         json.dumps({"ok": True, "port": service.server_port}), encoding="utf-8")
@@ -81,6 +84,7 @@ def run():
                     window.destroy()
             window.events.loaded += verify_page
         webview.start(gui="edgechromium", private_mode=False,
+                      icon=str(gallery.RESOURCE_ROOT / "assets" / "app.ico"),
                       storage_path=str(gallery.DATA / "webview"))
     finally:
         if service is not None:
