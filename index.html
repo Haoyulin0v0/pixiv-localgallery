@@ -97,7 +97,7 @@ dialog{color:inherit;border:1px solid #41404a;background:#202228;box-shadow:0 30
         <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索本地图库的标题、画师或标签…" autocomplete="off"><kbd>Ctrl K</kbd></div>
         <div class="topbar-actions"><button id="account-button" class="button secondary">连接 Pixiv</button><button id="add-button" class="button primary"><span>＋</span> 添加插画</button></div>
       </header>
-      <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请双击 <strong>pixiv-gallery.exe</strong>（或运行 <strong>start.bat</strong>），保持命令窗口开启，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
+      <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请双击 <strong>pixiv-gallery.exe</strong> 打开画屿桌面窗口；浏览器版请运行 <strong>start.bat</strong>，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
 
       <section class="hero" id="hero">
         <div class="hero-copy"><div class="eyebrow">PERSONAL ART LIBRARY</div><h1>让喜欢的插画，<br><em>随时都找得到。</em></h1><p>收集原图，整理 Pixiv 标签，按画师和关键词快速查找。</p><button id="hero-add" class="button hero-button">开始整理 <span>↗</span></button></div>
@@ -221,16 +221,16 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => 
 
 async function api(path, options = {}) {
   if (location.protocol === "file:") {
-    throw new Error("当前直接打开了 index.html。请双击 pixiv-gallery.exe（或运行 start.bat），并在 http://127.0.0.1:8765 打开图库。");
+    throw new Error("当前直接打开了 index.html。请双击 pixiv-gallery.exe 打开桌面窗口；浏览器版请运行 start.bat。");
   }
   let response;
   try { response = await fetch(path, options); }
-  catch { throw new Error("无法连接本地服务。请双击 pixiv-gallery.exe（或运行 start.bat），保持命令窗口开启，然后访问 http://127.0.0.1:8765。"); }
+  catch { throw new Error("无法连接本地服务。请关闭并重新打开画屿；浏览器版请重新运行 start.bat。"); }
   if (!response.headers.get("Content-Type")?.includes("application/json")) {
     if (response.status === 404 && path.startsWith("/api/")) {
-      throw new Error("正在运行的是旧版本地服务。请关闭所有画屿命令窗口，再双击新版 pixiv-gallery.exe 或 start.bat；如果已开多个窗口，需要全部关闭。");
+      throw new Error("正在运行的是旧版本地服务。请关闭所有画屿窗口，再双击新版 pixiv-gallery.exe；浏览器版请重新运行新版 start.bat。");
     }
-    throw new Error(`本地服务返回了非 JSON 内容（HTTP ${response.status}）。请查看启动服务的命令窗口中的报错。`);
+    throw new Error(`本地服务返回了非 JSON 内容（HTTP ${response.status}）。请重新打开画屿；浏览器版可查看命令窗口中的报错。`);
   }
   let result;
   try { result = await response.json(); } catch { throw new Error("本地服务返回了无效数据。"); }
@@ -835,13 +835,13 @@ function switchView(view, options = {}) {
       state.discoverEmptyBatches = 0;
     }
     $("#remote-title").textContent = "为你发现";
-    $("#remote-description").textContent = "每次进入都从 Pixiv 获取新推荐，已推荐或已保存的作品自动跳过。";
+    $("#remote-description").textContent = "每次进入都刷新 Pixiv 推荐，允许再次看到以前的作品，继续下滑加载更多。";
     state.remoteItems = state.discoverItems;
     $("#remote-grid").className = "art-grid";
     showMessage($("#remote-message"), "");
     renderFeed();
     if (!state.discoverItems.length) {
-      showMessage($("#remote-message"), "正在从 Pixiv 获取还没推荐过的作品…");
+      showMessage($("#remote-message"), "正在刷新 Pixiv 推荐…");
       loadDiscoverBatch();
     } else maybeLoadDiscover();
     return;
@@ -1343,7 +1343,7 @@ async function loadDiscoverBatch() {
     state.discoverEmptyBatches = added ? 0 : state.discoverEmptyBatches + 1;
     state.remoteItems = state.discoverItems;
     renderFeed(addedItems);
-    showMessage($("#remote-message"), added ? "" : "Pixiv 暂时没有返回未推荐过的作品，停留在底部会稍后重试。", false);
+    showMessage($("#remote-message"), added ? "" : "Pixiv 这一批推荐已在当前列表中，停留在底部会稍后重试。", false);
     $("#remote-sentinel").textContent = added
       ? `已显示 ${state.discoverItems.length} 件不同作品，继续下滑加载…`
       : "暂无新的推荐，稍后自动重试…";

@@ -16,6 +16,7 @@ jobs:
         with:
           python-version: '3.13'
       - run: python tests/test_follow_bulk.py
+      - run: python tests/test_discovery.py
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -28,18 +29,18 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - run: python -m pip install pyinstaller==6.20.0
+      - run: python -m pip install -r requirements-build.txt
       - run: python scripts/build_exe.py
       - run: python scripts/smoke_exe.py
-      - run: python scripts/package_release.py v0.2.0
-      - name: Publish v0.2.0 once
+      - run: python scripts/package_release.py v0.3.0
+      - name: Publish v0.3.0 once
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v0.2.0 >/dev/null 2>&1; then
-            gh release create v0.2.0 dist/pixiv-gallery-v0.2.0.zip dist/pixiv-gallery.exe \
+          if ! gh release view v0.3.0 >/dev/null 2>&1; then
+            gh release create v0.3.0 dist/pixiv-gallery-v0.3.0.zip dist/pixiv-gallery.exe \
               --target "$GITHUB_SHA" \
-              --title "画屿 v0.2.0" \
+              --title "画屿 v0.3.0" \
               --notes-file RELEASE_NOTES.md
           fi
