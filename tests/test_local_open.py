@@ -34,7 +34,10 @@ with tempfile.TemporaryDirectory() as temporary:
     try:
         with patch.object(gallery.os,'startfile',create=True) as opened,patch.object(gallery.subprocess,'Popen') as revealed:
             status,result=request(page=1)
-            assert status==200 and result['path']==str((gallery.IMAGES/'two.png').resolve())
+            assert status==200 and Path(result['path']).is_absolute()
+            # Hosted Windows uses RUNNER~1 paths; compare file identity rather
+            # than an expanded path string to validate the actual target.
+            assert Path(result['path']).samefile(gallery.IMAGES/'two.png')
             opened.assert_called_once_with(result['path'])
             revealed.assert_called_once_with(['explorer.exe','/select,',result['path']])
             opened.reset_mock();revealed.reset_mock()
