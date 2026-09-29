@@ -43,7 +43,7 @@ try:
     assert (directory / "data" / "library.sqlite3").is_file()
     with socket.socket() as probe:
         assert probe.connect_ex(("127.0.0.1", result["port"])) != 0, "Service survived window close"
-    print("WebView2 rendered the page and tag editor; adjacent data and window shutdown passed")
+    print("WebView2 page, icon, tag editor, native history and U shortcut; adjacent data and shutdown passed")
 finally:
     if process is not None and process.poll() is None:
         subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],

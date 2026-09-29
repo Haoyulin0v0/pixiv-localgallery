@@ -4,7 +4,7 @@
 
 ## 启动
 
-下载 Windows 版 `pixiv-gallery.exe` 后，放到你想存放图库的文件夹，双击即可打开画屿独立窗口；**无需安装 Python，不再弹出命令窗口**。关闭画屿窗口时，本地服务一起停止。图片、数据库和加密保存的会话都在 EXE 同文件夹的 `data` 目录。升级时先关闭旧版，再把新版 EXE 放回原文件夹，保留 `data` 目录即可。
+下载 Windows 版 `pixiv-gallery.exe` 后，放到你想存放图库的文件夹，双击即可打开画屿独立窗口；**无需安装 Python，不再弹出命令窗口**。关闭画屿窗口时，本地服务一起停止。图片、数据库和加密保存的会话都在 EXE 同文件夹的 `data` 目录。升级时先关闭旧版，再把新版 EXE 放回原文件夹，保留 `data` 目录即可。如果使用同目录的“画屿.exe”入口，也应替换该 EXE；两个入口共用同一图库。Windows 偶尔缓存旧文件名的图标，可使用“画屿.exe”文件名重新读取图标。
 
 桌面版使用 Microsoft Edge WebView2。若启动时提示缺少运行时，可从 [Microsoft 官方页面](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)安装 Evergreen WebView2 Runtime。重复双击程序会尝试激活已打开的画屿窗口。桌面版自动使用可用的本地端口，不依赖固定的 8765 端口。
 
@@ -39,6 +39,25 @@ python server.py
 
 13. 点击右上角“外观”，可自定义主题色、背景色，选择本地图片作为壁纸并调节遮罩。提供暮色紫、海岛绿、暖纸白三种预设，深浅背景会自动调整文字颜色。修改即时预览，点击“保存外观”后持久保存；直接关闭设置会取消未保存的预览。“移除壁纸”和“恢复默认”也需要保存后生效。壁纸支持 JPG、PNG、GIF、WebP、AVIF，最大 20 MB，复制保存在图库的 `data/appearance/` 中，原文件移动不影响已保存的壁纸。
 
+14. 在 Pixiv 作品预览或列表中，已保存作品会显示“在图库中找到插图”。点击后定位本地图库中的对应作品，打开第一张本地原图，并在资源管理器中选中它所在文件夹中的文件。新保存的作品也会立即变为这个按钮，不会重复下载。
+15. 点击顶部 ←、按 `U` 或鼠标后退侧键可返回上一页或关闭当前预览；恢复之前的列表、筛选、页码和滚动位置。浏览器后退/前进与桌面 WebView 使用同一份页面历史，预览里的画师和标签支持多层回退。从推荐返回时保留原列表；再次从侧栏进入推荐仍重新刷新。
+
+### 快捷键
+
+导航按键沿用 [Discourse 的快捷键定义](https://github.com/discourse/discourse/blob/main/frontend/discourse/app/services/keyboard-shortcuts.js)，对应到图库中的操作：
+
+| 按键 | 操作 |
+| --- | --- |
+| `U`、鼠标后退侧键、`Alt + ←` | 返回上一页或关闭当前预览 |
+| `/` | 聚焦本地或 Pixiv 搜索 |
+| `J` / `K` | 选择下一件 / 上一件作品或画师 |
+| `O` / `Enter` | 打开选中的预览或画师作品 |
+| `G` 再 `H` | 回到全部插画 |
+| `?` | 显示快捷键帮助 |
+| `Esc` | 关闭当前弹窗 |
+
+单字母快捷键在输入框、标签编辑器、下拉框和中文输入过程中不触发。页面历史和浏览列表在本次窗口会话中保留，重新打开窗口后重新建立。
+
 ### Pixiv 登录 Cookie
 
 部分公开作品可以直接导入。关注新作和个性化推荐需要登录状态。可在浏览器开发者工具的“应用程序/存储 → Cookies → pixiv.net”中找到已登录账号的 `PHPSESSID`，然后在页面右上角输入其**值**。默认勾选“在这台电脑记住连接”：程序会使用 Windows 当前用户的加密功能，把会话保存在 `data/pixiv_session.bin`，下次启动自动读取。取消勾选则只在本次运行期间使用。点击“断开连接”会清除内存中的会话及保存文件。**不要把 Cookie 发给别人，也不要把它写入项目文件或截图公开。**
@@ -60,12 +79,13 @@ python server.py
 python tests/test_follow_bulk.py
 python tests/test_discovery.py
 python tests/test_appearance.py
+python tests/test_local_open.py
 ```
 
 生成与 Release 相同的代码下载包：
 
 ```powershell
-python scripts/package_release.py v0.4.0
+python scripts/package_release.py v0.5.0
 ```
 
 在 Windows 源码仓库中安装 PyInstaller 后，可生成单文件 EXE：

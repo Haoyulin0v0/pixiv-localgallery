@@ -97,6 +97,13 @@ dialog{color:var(--text)}
 :root[data-theme=light] .hint,:root[data-theme=light] .dialog-label,:root[data-theme=light] .tab-panel label,:root[data-theme=light] .detail-side label,:root[data-theme=light] .bulk-form label,:root[data-theme=light] .remember-row,:root[data-theme=light] .follow-choice,:root[data-theme=light] .remote-detail-artist,:root[data-theme=light] .field-note,:root[data-theme=light] .ranking-form,:root[data-theme=light] #remote-sentinel{color:var(--muted)}
 :root[data-theme=light] .icon-button:hover{color:var(--text)}
 @media(max-width:560px){.topbar #appearance-button{font-size:0;padding:10px}.topbar #appearance-button span{font-size:18px}.appearance-colors{gap:8px}.appearance-field{padding:9px}}
+
+.topbar-search{display:flex;align-items:center;gap:10px;flex:1;min-width:0;max-width:490px}.topbar-search .search-wrap{flex:1;min-width:0}
+#navigation-back{font-size:20px;padding:7px 12px}#navigation-back:disabled{opacity:.4;cursor:default}#shortcuts-button{padding:11px 13px}
+.art-item.keyboard-current,.artist-card.keyboard-current{outline:2px solid var(--accent);outline-offset:3px}
+.shortcuts-table{width:100%;border-collapse:collapse;margin-top:23px;font-size:13px}.shortcuts-table td{padding:11px 0;border-bottom:1px solid var(--border)}.shortcuts-table td:last-child{text-align:right}
+.shortcuts-table kbd{display:inline-block;border:1px solid var(--border-strong);border-radius:5px;padding:3px 7px;background:var(--input-bg);min-width:25px;text-align:center;font-family:inherit}
+@media(max-width:560px){.topbar #navigation-back,.topbar #shortcuts-button{font-size:15px;padding:10px 8px}.topbar-search{gap:5px}}
 </style>
 
 </head>
@@ -122,8 +129,8 @@ dialog{color:var(--text)}
 
     <main class="main-content">
       <header class="topbar">
-        <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索本地图库的标题、画师或标签…" autocomplete="off"><kbd>Ctrl K</kbd></div>
-        <div class="topbar-actions"><button id="appearance-button" class="button secondary" title="外观设置"><span aria-hidden="true">◐</span> 外观</button><button id="account-button" class="button secondary">连接 Pixiv</button><button id="add-button" class="button primary"><span>＋</span> 添加插画</button></div>
+        <div class="topbar-search"><button id="navigation-back" class="button secondary" type="button" title="返回上一页（U）" aria-label="返回上一页" disabled>←</button><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索本地图库的标题、画师或标签…" autocomplete="off"><kbd>/</kbd></div></div>
+        <div class="topbar-actions"><button id="shortcuts-button" class="button secondary" type="button" title="快捷键（?）" aria-label="快捷键">?</button><button id="appearance-button" class="button secondary" title="外观设置"><span aria-hidden="true">◐</span> 外观</button><button id="account-button" class="button secondary">连接 Pixiv</button><button id="add-button" class="button primary"><span>＋</span> 添加插画</button></div>
       </header>
       <div id="launch-warning" class="launch-warning" role="alert" hidden>当前直接打开了 HTML，无法连接本地服务。请双击 <strong>pixiv-gallery.exe</strong> 打开画屿桌面窗口；浏览器版请运行 <strong>start.bat</strong>，再访问 <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>。</div>
 
@@ -153,6 +160,19 @@ dialog{color:var(--text)}
   </div>
 
 
+  <dialog id="shortcuts-dialog" class="modal">
+    <div class="modal-head"><div><span class="eyebrow">KEYBOARD SHORTCUTS</span><h2>快捷键</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
+    <table class="shortcuts-table"><tbody>
+      <tr><td>返回上一页 / 关闭当前预览</td><td><kbd>U</kbd></td></tr>
+      <tr><td>搜索</td><td><kbd>/</kbd></td></tr>
+      <tr><td>选择下一件 / 上一件</td><td><kbd>J</kbd> / <kbd>K</kbd></td></tr>
+      <tr><td>打开选中作品或画师</td><td><kbd>O</kbd> / <kbd>Enter</kbd></td></tr>
+      <tr><td>回到全部插画</td><td><kbd>G</kbd> 再 <kbd>H</kbd></td></tr>
+      <tr><td>查看快捷键</td><td><kbd>?</kbd></td></tr>
+      <tr><td>关闭弹窗</td><td><kbd>Esc</kbd></td></tr>
+    </tbody></table>
+    <p class="hint">沿用 Discourse 的导航按键。鼠标后退侧键和 Alt + ← 也可回退；输入文字时不会触发单字母快捷键。</p>
+  </dialog>
   <dialog id="appearance-dialog" class="modal">
     <div class="modal-head"><div><span class="eyebrow">MAKE IT YOURS</span><h2>外观设置</h2></div><button class="icon-button close" aria-label="关闭">×</button></div>
     <form id="appearance-form" class="appearance-form">
@@ -858,6 +878,19 @@ function switchView(view, options = {}) {
     return;
   }
   state.remotePage = options.page || 1;
+  if (options.snapshot?.loaded) {
+    const target = options.snapshot;
+    $("#remote-title").textContent = target.title;
+    $("#remote-description").textContent = target.description;
+    $("#remote-grid").className = target.gridClass;
+    target.gridClass === "artist-grid" ? renderArtistResults() : renderFeed();
+    setHeaderFollow(view === "followed_artists" ? state.followedArtist?.id || "" :
+      view === "search" && state.searchKind === "artist_works" ? state.artistId : "");
+    $("#search-back").hidden = target.backHidden;
+    $("#search-back").textContent = target.backText;
+    showMessage($("#remote-message"), target.message, target.messageError);
+    return;
+  }
   if (view === "followed_artists") {
     state.followedArtist = options.followedArtist || null;
     if (!state.followedArtist) state.remotePage = state.followedListPage;
@@ -911,11 +944,13 @@ function switchView(view, options = {}) {
 function renderFeed(addedItems = null) {
   const grid = $("#remote-grid");
   if (!addedItems) grid.replaceChildren();
-  const saved = new Set(state.artworks.map((art) => art.pixiv_id).filter(Boolean));
+  const saved = new Set(state.artworks.map((art) => String(art.pixiv_id || "")).filter(Boolean));
   const fragment = document.createDocumentFragment();
   for (const art of addedItems || state.remoteItems) {
     const card = document.createElement("article");
     card.className = "art-item remote-card";
+    card.dataset.pixivId = String(art.id);
+    card.tabIndex = -1;
     const preview = art.thumbnail
       ? `<img class="art-image" src="/api/preview?url=${encodeURIComponent(art.thumbnail)}" alt="${escapeHtml(art.title)}" loading="lazy">`
       : '<div class="art-image"></div>';
@@ -923,10 +958,11 @@ function renderFeed(addedItems = null) {
       <div class="art-title" title="${escapeHtml(art.title)}">${escapeHtml(art.title)}</div>
       <div class="art-artist">${escapeHtml(art.artist || "未知画师")}${art.page_count > 1 ? ` · ${art.page_count} 页` : ""}</div>
       <div class="art-tags">${art.tags.slice(0, 2).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}</div>
-      <button class="button secondary remote-save-button" ${saved.has(art.id) ? "disabled" : ""}>${saved.has(art.id) ? "已保存" : "保存原图到图库"}</button>
+      <button class="button secondary remote-save-button">${saved.has(String(art.id)) ? "在图库中找到插图" : "保存原图到图库"}</button>
     </div>`;
     card.querySelector(".art-image").onclick = () => openRemoteDetail(art);
     card.querySelector(".art-title").onclick = () => openRemoteDetail(art);
+    updateRemoteSaveButton(card.querySelector(".remote-save-button"), art);
     card.querySelector(".remote-save-button").onclick = (event) => saveRemote(art, event.currentTarget);
     fragment.append(card);
   }
@@ -1094,8 +1130,7 @@ async function openRemoteDetail(art) {
   $("#remote-source").href = art.source_url;
   $("#remote-artist-source").hidden = !/^\d{1,12}$/.test(String(art.artist_id || ""));
   $("#remote-artist-source").href = $("#remote-artist-source").hidden ? "#" : `https://www.pixiv.net/users/${art.artist_id}`;
-  $("#remote-save").disabled = state.artworks.some((item) => item.pixiv_id === art.id);
-  $("#remote-save").textContent = $("#remote-save").disabled ? "已保存到图库" : "保存原图到图库";
+  updateRemoteSaveButton($("#remote-save"), art);
   const followButton = $("#remote-follow");
   followButton.hidden = !state.connected || !/^\d{1,12}$/.test(String(art.artist_id || ""));
   $("#follow-choice").hidden = followButton.hidden;
@@ -1127,7 +1162,31 @@ async function openRemoteDetail(art) {
   }
 }
 
+const remoteImports = new Set();
+function savedRemoteArtwork(art) {
+  return state.artworks.find((item) => item.pixiv_id && String(item.pixiv_id) === String(art.id));
+}
+function updateRemoteSaveButton(button, art) {
+  const busy = remoteImports.has(String(art.id));
+  button.disabled = busy;
+  button.textContent = busy ? "正在保存…" : savedRemoteArtwork(art) ? "在图库中找到插图" : "保存原图到图库";
+}
+async function findSavedArtwork(art) {
+  const local = savedRemoteArtwork(art);
+  if (!local) { toast("这件作品尚未保存在本地图库。"); return; }
+  if ($("#remote-dialog").open) $("#remote-dialog").close();
+  state.filter = null;
+  state.search = String(local.pixiv_id);
+  $("#search").value = state.search;
+  switchView("library");
+  openDetail(local);
+  await openLocalImage(local, 0, "both");
+}
+
 async function saveRemote(art, button) {
+  if (savedRemoteArtwork(art)) return findSavedArtwork(art);
+  if (remoteImports.has(String(art.id))) return;
+  remoteImports.add(String(art.id));
   button.disabled = true;
   button.textContent = "正在保存…";
   showMessage($("#remote-detail-message"), "");
@@ -1139,8 +1198,8 @@ async function saveRemote(art, button) {
     await reload();
     renderFeed();
     if (state.remoteSelected?.id === art.id) {
-      $("#remote-save").disabled = true;
-      $("#remote-save").textContent = "已保存到图库";
+      $("#remote-save").disabled = false;
+      $("#remote-save").textContent = "在图库中找到插图";
       showMessage($("#remote-detail-message"), `已保存 ${result.pages} 张原图到本地图库。`);
     }
     toast(`已保存 ${result.pages} 张原图`);
@@ -1151,6 +1210,13 @@ async function saveRemote(art, button) {
       showMessage($("#remote-detail-message"), error.message, true);
     } else {
       showMessage($("#remote-message"), error.message, true);
+    }
+  } finally {
+    remoteImports.delete(String(art.id));
+    if (state.remoteSelected) updateRemoteSaveButton($("#remote-save"), state.remoteSelected);
+    for (const card of document.querySelectorAll(".remote-card")) {
+      const item = state.remoteItems.find((item) => String(item.id) === card.dataset.pixivId);
+      if (item) updateRemoteSaveButton(card.querySelector(".remote-save-button"), item);
     }
   }
 }
@@ -1231,6 +1297,219 @@ async function disconnectAccount() {
   toast("Pixiv 已断开");
 }
 
+// In-memory snapshots use the browser's same-document history, so native mouse
+// back works in Chrome and WebView2 without navigating away from the gallery.
+const navigationCache = new Map();
+let navigationIds = [], navigationPosition = 0, nextNavigationId = 0;
+let navigationDepth = 0, restoringNavigation = false, navigationPending = false;
+let closingNavigation = false, shortcutPrefixUntil = 0;
+
+function navigationSnapshot() {
+  const dialog = document.activeElement?.closest("dialog[open]") || [...document.querySelectorAll("dialog[open]")].at(-1);
+  const loading = $("#remote-message").textContent.startsWith("正在");
+  return {
+    view: state.view, remotePage: state.remotePage, filter: state.filter ? {...state.filter} : null,
+    search: state.search, sort: $("#sort").value,
+    searchKind: state.searchKind, searchQuery: state.searchQuery, searchSort: state.searchSort,
+    artistId: state.artistId, artistName: state.artistName, followedArtist: state.followedArtist,
+    followedListPage: state.followedListPage, followedListScrollY: state.followedListScrollY,
+    rankingMode: state.rankingMode, previewReturn: state.previewReturn,
+    remoteItems: state.remoteItems.slice(), artists: state.artists.slice(), remoteLastPage: state.remoteLastPage,
+    discoverItems: state.discoverItems.slice(), discoverEmptyBatches: state.discoverEmptyBatches,
+    title: $("#remote-title").textContent, description: $("#remote-description").textContent,
+    gridClass: $("#remote-grid").className, loaded: !loading,
+    backHidden: $("#search-back").hidden, backText: $("#search-back").textContent,
+    message: $("#remote-message").hidden ? "" : $("#remote-message").textContent,
+    messageError: $("#remote-message").classList.contains("error"),
+    scrollY: window.scrollY, dialog: dialog?.id || "",
+    selectedId: state.selected?.id || "", localPage: state.page,
+    remoteSelected: state.remoteSelected,
+  };
+}
+function navigationKey(value, withDialog = true) {
+  return JSON.stringify([value.view,value.remotePage,value.filter,value.search,value.sort,
+    value.searchKind,value.searchQuery,value.searchSort,value.artistId,value.followedArtist?.id,
+    value.rankingMode,withDialog ? value.dialog : "",
+    withDialog && value.dialog === "detail-dialog" ? value.selectedId : "",
+    withDialog && value.dialog === "remote-dialog" ? value.remoteSelected?.id : ""]);
+}
+function updateBackButton() { $("#navigation-back").disabled = navigationPosition === 0 || navigationPending; }
+function withoutNavigation(action) {
+  const previous = restoringNavigation; restoringNavigation = true;
+  try { return action(); } finally { restoringNavigation = previous; }
+}
+function commitNavigation(origin, originId) {
+  if (restoringNavigation || navigationDepth || navigationPending || navigationIds[navigationPosition] !== originId) return;
+  const target = navigationSnapshot();
+  if (navigationKey(origin) === navigationKey(target)) return;
+  navigationCache.set(originId,origin);
+  const prior = navigationCache.get(navigationIds[navigationPosition-1]);
+  if (origin.dialog && !target.dialog && prior && navigationKey(prior) === navigationKey(target)) {
+    closingNavigation = true;
+    galleryBack();
+    return;
+  }
+  const id = ++nextNavigationId;
+  for (const discarded of navigationIds.slice(navigationPosition+1)) navigationCache.delete(discarded);
+  navigationIds = navigationIds.slice(0,navigationPosition+1);
+  navigationIds.push(id); navigationPosition++;
+  navigationCache.set(id,target);
+  history.pushState({galleryNavigation:id}, "");
+  updateBackButton();
+}
+function navigateGallery(action) {
+  if (restoringNavigation || navigationDepth) return action();
+  const origin = navigationSnapshot(), originId = navigationIds[navigationPosition];
+  navigationDepth++;
+  try { return action(); }
+  finally { navigationDepth--; commitNavigation(origin,originId); }
+}
+function galleryBack() {
+  if (navigationPending) return true;
+  const dialog = document.activeElement?.closest("dialog[open]") || [...document.querySelectorAll("dialog[open]")].at(-1);
+  if (dialog && navigationCache.get(navigationIds[navigationPosition])?.dialog !== dialog.id) {
+    if (dialog.id !== "appearance-dialog" || !appearanceSaving) dialog.close();
+    return true;
+  }
+  if (navigationPosition <= 0) return false;
+  navigationPending = true; updateBackButton(); history.back(); return true;
+}
+function restoreNavigation(target) {
+  withoutNavigation(() => {
+    for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+    Object.assign(state, {
+      filter: target.filter, search: target.search,
+      searchKind: target.searchKind, searchQuery: target.searchQuery, searchSort: target.searchSort,
+      artistId: target.artistId, artistName: target.artistName, followedArtist: target.followedArtist,
+      followedListPage: target.followedListPage, followedListScrollY: target.followedListScrollY,
+      restoreFollowedScroll: false, rankingMode: target.rankingMode, previewReturn: target.previewReturn,
+      remoteItems: target.remoteItems.slice(), artists: target.artists.slice(), remoteLastPage: target.remoteLastPage,
+      discoverItems: target.discoverItems.slice(), discoverSeen: new Set(target.discoverItems.map(item=>item.id)),
+      discoverEmptyBatches: target.discoverEmptyBatches,
+    });
+    state.discoverGeneration++;
+    $("#search").value = target.search; $("#sort").value = target.sort;
+    $("#pixiv-search-kind").value = target.searchKind === "artworks" ? "artworks" : "artists";
+    $("#pixiv-search-query").value = target.searchQuery;
+    $("#pixiv-search-order").value = target.searchSort;
+    $("#pixiv-search-order").hidden = target.searchKind !== "artworks";
+    $("#ranking-mode").value = target.rankingMode;
+    switchView(target.view,{page:target.remotePage,followedArtist:target.followedArtist,
+      preserveDiscover:true,snapshot:target});
+    // switchView normally clears this value when leaving search.
+    state.previewReturn = target.previewReturn;
+    if (target.dialog === "detail-dialog") {
+      const art = state.artworks.find(item=>item.id === target.selectedId);
+      if (art) { openDetail(art); state.page = Math.min(target.localPage,art.images.length-1); showPage(); }
+    } else if (target.dialog === "remote-dialog" && target.remoteSelected) {
+      openRemoteDetail(target.remoteSelected);
+    } else if (target.dialog === "appearance-dialog") {
+      setTimeout(() => $("#appearance-button").onclick(),0);
+    } else if (target.dialog) {
+      document.getElementById(target.dialog)?.showModal();
+    }
+    requestAnimationFrame(() => window.scrollTo(0,target.scrollY));
+  });
+}
+if (location.protocol !== "file:") {
+  const id = nextNavigationId;
+  navigationIds = [id]; navigationCache.set(id,navigationSnapshot());
+  history.replaceState({galleryNavigation:id}, "");
+  history.scrollRestoration = "manual";
+}
+window.addEventListener("popstate", (event) => {
+  const targetId = event.state?.galleryNavigation;
+  const target = navigationCache.get(targetId);
+  if (!target) { navigationPending = false; updateBackButton(); return; }
+  if (!closingNavigation) navigationCache.set(navigationIds[navigationPosition],navigationSnapshot());
+  closingNavigation = false;
+  navigationPosition = navigationIds.indexOf(targetId);
+  // Closing and reopening dialogs dispatches close asynchronously. Keep the
+  // suppression flag set until those events have drained.
+  restoringNavigation = true;
+  restoreNavigation(target);
+  setTimeout(() => { restoringNavigation = false; navigationPending = false; updateBackButton(); },0);
+});
+
+// Functions can also navigate after an asynchronous click timer or a direct
+// keyboard call. Nested operations become one step (e.g. find a saved artwork).
+for (const name of ["switchView","browsePixivAuthor","browsePixivTag","openDetail",
+    "openRemoteDetail","findSavedArtwork","submitPixivSearch","restoreBrowseOrigin"]) {
+  const original = window[name];
+  window[name] = (...args) => navigateGallery(() => original(...args));
+}
+for (const eventName of ["click","submit","change"]) document.addEventListener(eventName,() => {
+  if (restoringNavigation || navigationPending) return;
+  const origin = navigationSnapshot(), originId = navigationIds[navigationPosition];
+  queueMicrotask(() => commitNavigation(origin,originId));
+},true);
+for (const dialog of document.querySelectorAll("dialog")) dialog.addEventListener("close",() => {
+  const id = navigationIds[navigationPosition], origin = navigationCache.get(id);
+  if (origin?.dialog === dialog.id) commitNavigation({...navigationSnapshot(),dialog:dialog.id},id);
+});
+$("#navigation-back").onclick = galleryBack;
+$("#shortcuts-button").onclick = () => $("#shortcuts-dialog").showModal();
+
+function editingTarget(target) {
+  return target instanceof Element && Boolean(target.closest("input,textarea,select,[contenteditable]:not([contenteditable=false])"));
+}
+function keyboardSelect(direction) {
+  if (document.querySelector("dialog[open]")) return;
+  const root = state.view === "library" ? $("#grid") : $("#remote-grid");
+  const cards = [...root.querySelectorAll(".art-item,.artist-card")];
+  if (!cards.length) return;
+  let index = cards.findIndex(card=>card === document.activeElement || card.classList.contains("keyboard-current"));
+  index = index < 0 ? (direction>0 ? 0 : cards.length-1) : Math.max(0,Math.min(cards.length-1,index+direction));
+  for (const card of document.querySelectorAll(".keyboard-current")) card.classList.remove("keyboard-current");
+  const card = cards[index]; card.classList.add("keyboard-current"); card.tabIndex=0;
+  card.focus({preventScroll:true}); card.scrollIntoView({block:"nearest"});
+}
+document.addEventListener("keydown", (event) => {
+  if (event.defaultPrevented || event.isComposing || event.repeat) return;
+  const key = event.key.toLowerCase();
+  const editing = editingTarget(event.target);
+  if (event.altKey && event.key === "ArrowLeft" && !event.ctrlKey && !event.metaKey) {
+    event.preventDefault(); galleryBack(); return;
+  }
+  if (event.ctrlKey || event.metaKey || event.altKey || editing) { shortcutPrefixUntil=0; return; }
+  if (key === "u" && !event.shiftKey) { event.preventDefault(); shortcutPrefixUntil=0; galleryBack(); return; }
+  if (event.key === "?") {
+    event.preventDefault(); if (!$("#shortcuts-dialog").open) navigateGallery(() => $("#shortcuts-dialog").showModal()); return;
+  }
+  if (document.querySelector("dialog[open]")) return;
+  if (key === "g" && !event.shiftKey) { shortcutPrefixUntil=Date.now()+1000; return; }
+  if (key === "h" && Date.now()<shortcutPrefixUntil) {
+    event.preventDefault(); shortcutPrefixUntil=0;
+    navigateGallery(() => {state.filter=null; state.search=""; $("#search").value=""; switchView("library"); window.scrollTo(0,0);}); return;
+  }
+  shortcutPrefixUntil=0;
+  if (event.key === "/") {
+    event.preventDefault();
+    if (state.view !== "library" && state.view !== "search") switchView("search");
+    (state.view === "library" ? $("#search") : $("#pixiv-search-query")).focus();
+  } else if ((key === "j" || key === "k") && !event.shiftKey) {
+    event.preventDefault(); keyboardSelect(key === "j" ? 1 : -1);
+  } else if ((key === "o" && !event.shiftKey) || event.key === "Enter") {
+    const card = document.activeElement?.closest(".art-item,.artist-card");
+    if (!card || event.target.closest("button,a")) return;
+    event.preventDefault();
+    if (card.classList.contains("remote-card")) card.querySelector(".art-image").click();
+    else if (card.classList.contains("artist-card")) card.querySelector(".artist-works-button").click();
+    else card.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:false,cancelable:true}));
+  }
+});
+// Chromium may deliver a DOM button-3 event or perform native history.back().
+// Suppress the DOM default so these two paths cannot cause a double back.
+document.addEventListener("mouseup",(event) => {
+  if (event.button === 3) { event.preventDefault(); event.stopPropagation(); galleryBack(); }
+},true);
+document.addEventListener("mousedown",(event) => {
+  if (event.button === 3) event.preventDefault();
+},true);
+document.addEventListener("auxclick",(event) => {
+  if (event.button === 3) event.preventDefault();
+},true);
+
 $("#add-button").onclick = () => openAdd();
 $("#hero-add").onclick = () => openAdd();
 $("#empty-add").onclick = () => openAdd();
@@ -1248,6 +1527,7 @@ $("#ranking-mode").onchange = (event) => {
 $("#pixiv-search-form").onsubmit = submitPixivSearch;
 $("#pixiv-search-kind").onchange = () => { $("#pixiv-search-order").hidden = $("#pixiv-search-kind").value !== "artworks"; };
 $("#search-back").onclick = () => {
+  if (galleryBack()) return;
   if (state.view === "followed_artists") {
     state.followedArtist = null;
     state.remotePage = state.followedListPage;
@@ -1791,7 +2071,7 @@ reload().catch((error) => {
 const initialView = new URLSearchParams(location.search).get("view");
 api("/api/status").then((status) => {
   updateAccountStatus(status.pixiv_cookie_configured, status.session_saved);
-  if (["following", "followed_artists", "discover", "ranking", "search"].includes(initialView)) switchView(initialView);
+  if (["following", "followed_artists", "discover", "ranking", "search"].includes(initialView)) withoutNavigation(() => switchView(initialView));
   if (status.pixiv_cookie_configured && initialView !== "following") pollFollowing();
 }).catch(() => {});
 setInterval(pollFollowing, 5 * 60 * 1000);
