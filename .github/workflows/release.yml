@@ -34,16 +34,16 @@ jobs:
       - run: python -m pip install -r requirements-build.txt
       - run: python scripts/build_exe.py
       - run: python scripts/smoke_exe.py
-      - run: python scripts/package_release.py v0.5.2
+      - run: python scripts/package_release.py v0.5.3
       - run: Copy-Item dist/pixiv-gallery.exe dist/huayu.exe
-      - name: Publish v0.5.2 once
+      - name: Publish v0.5.3 once
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view v0.5.2 >/dev/null 2>&1; then
-            gh release create v0.5.2 dist/pixiv-gallery-v0.5.2.zip dist/pixiv-gallery.exe dist/huayu.exe \
+          if ! gh release view v0.5.3 >/dev/null 2>&1; then
+            gh release create v0.5.3 dist/pixiv-gallery-v0.5.3.zip dist/pixiv-gallery.exe dist/huayu.exe \
               --target "$GITHUB_SHA" \
-              --title "画屿 v0.5.2" \
+              --title "画屿 v0.5.3" \
               --notes-file RELEASE_NOTES.md
           fi
