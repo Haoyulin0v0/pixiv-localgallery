@@ -100,13 +100,13 @@ dialog{color:var(--text)}
 
 .topbar-search{display:flex;align-items:center;gap:10px;flex:1;min-width:0;max-width:490px}.topbar-search .search-wrap{flex:1;min-width:0}
 #navigation-back{font-size:20px;padding:7px 12px}#navigation-back:disabled{opacity:.4;cursor:default}#shortcuts-button{padding:11px 13px}
-.button.remote-import-action{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
-.button.remote-import-action:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
-.button.remote-saved-action{background:rgba(0,0,0,.30);color:var(--text);border:1px solid var(--border-button)}
-.button.remote-saved-action:hover:not(:disabled){background:rgba(0,0,0,.42);border-color:var(--accent-border)}
-:root[data-theme=light] .button.remote-saved-action{background:rgba(0,0,0,.11)}
-:root[data-theme=light] .button.remote-saved-action:hover:not(:disabled){background:rgba(0,0,0,.18)}
-.button.remote-import-action:focus-visible,.button.remote-saved-action:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.button.remote-import-action{background:transparent;color:var(--text);border:1px solid var(--border-button)}
+.button.remote-import-action:hover:not(:disabled){background:rgba(0,0,0,.06);border-color:var(--border-strong)}
+.button.remote-saved-action{background:rgba(0,0,0,.14);color:var(--text);border:1px solid var(--border-button)}
+.button.remote-saved-action:hover:not(:disabled){background:rgba(0,0,0,.20);border-color:var(--border-strong)}
+:root[data-theme=light] .button.remote-saved-action{background:rgba(0,0,0,.07)}
+:root[data-theme=light] .button.remote-saved-action:hover:not(:disabled){background:rgba(0,0,0,.12)}
+.button.remote-import-action:focus-visible,.button.remote-saved-action:focus-visible{outline:2px solid var(--border-strong);outline-offset:2px}
 .art-item.keyboard-current,.artist-card.keyboard-current{outline:2px solid var(--accent);outline-offset:3px}
 .shortcuts-table{width:100%;border-collapse:collapse;margin-top:23px;font-size:13px}.shortcuts-table td{padding:11px 0;border-bottom:1px solid var(--border)}.shortcuts-table td:last-child{text-align:right}
 .shortcuts-table kbd{display:inline-block;border:1px solid var(--border-strong);border-radius:5px;padding:3px 7px;background:var(--input-bg);min-width:25px;text-align:center;font-family:inherit}
