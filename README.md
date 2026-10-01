@@ -85,7 +85,7 @@ python tests/test_local_open.py
 生成与 Release 相同的代码下载包：
 
 ```powershell
-python scripts/package_release.py v0.5.1
+python scripts/package_release.py v0.5.2
 ```
 
 在 Windows 源码仓库中安装 PyInstaller 后，可生成单文件 EXE：
