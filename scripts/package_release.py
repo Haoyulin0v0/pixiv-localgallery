@@ -6,7 +6,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "v0.5.1"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "v0.5.2"
 if not VERSION.startswith("v") or not VERSION[1:].replace(".", "").isdigit():
     raise SystemExit("Version must look like v0.1.0")
 OUTPUT = ROOT / "dist" / f"pixiv-gallery-{VERSION}.zip"
