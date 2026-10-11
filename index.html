@@ -109,6 +109,7 @@ dialog{color:var(--text)}
 .shortcuts-table{width:100%;border-collapse:collapse;margin-top:23px;font-size:13px}.shortcuts-table td{padding:11px 0;border-bottom:1px solid var(--border)}.shortcuts-table td:last-child{text-align:right}
 .shortcuts-table kbd{display:inline-block;border:1px solid var(--border-strong);border-radius:5px;padding:3px 7px;background:var(--input-bg);min-width:25px;text-align:center;font-family:inherit}
 @media(max-width:560px){.topbar #navigation-back,.topbar #shortcuts-button{font-size:15px;padding:10px 8px}.topbar-search{gap:5px}}
+#followed-search-clear[hidden]{display:none}
 </style>
 
 </head>
@@ -154,6 +155,7 @@ dialog{color:var(--text)}
       <section id="remote-view" class="remote-view" hidden>
         <div class="remote-heading"><div><div class="eyebrow">PIXIV LIVE</div><h2 id="remote-title">关注新作</h2><p id="remote-description"></p></div><div class="artist-card-actions"><button id="artist-follow-header" class="button secondary artist-follow-button" type="button" hidden>关注画师</button><button id="remote-refresh" class="button secondary">刷新作品</button></div></div>
         <form id="pixiv-search-form" class="pixiv-search-form" hidden><select id="pixiv-search-kind" aria-label="搜索类型"><option value="artworks">插画作品</option><option value="artists">画师</option></select><input id="pixiv-search-query" type="search" maxlength="100" placeholder="输入标签、关键词、画师名称或用户 ID" aria-label="Pixiv 搜索词"><select id="pixiv-search-order" aria-label="插画排序"><option value="date_d">最新</option><option value="hot">热门精选</option><option value="popular_d">完整热门排序（需 Premium）</option></select><button class="button primary" type="submit">搜索</button></form>
+        <form id="followed-search-form" class="pixiv-search-form" hidden><input id="followed-search-query" type="search" maxlength="100" placeholder="搜索关注画师的作品标题或标签；#标签可精确匹配" aria-label="搜索关注画师的插画"><button class="button secondary" type="submit">搜索插画</button><button id="followed-search-clear" class="button secondary" type="button" hidden>清除搜索</button></form>
         <div id="ranking-form" class="ranking-form" hidden><label for="ranking-mode">榜单</label><select id="ranking-mode"><option value="daily">日榜</option><option value="weekly">周榜</option><option value="monthly">月榜</option><option value="rookie">新人榜</option></select></div>
         <button id="search-back" class="button secondary search-back" hidden>← 返回画师搜索结果</button>
         <div id="remote-message" class="remote-message" hidden></div>
@@ -285,6 +287,7 @@ const state = {
   remoteSelected: null, connected: false, followSeenIds: null, newFollowCount: 0,
   searchKind: "artworks", searchQuery: "", searchSort: "date_d",
   artistId: "", artistName: "", artists: [], followedArtist: null,
+  followedSearchQuery: "",
   followedListCache: new Map(), followedListPage: 1, followedListScrollY: 0,
   restoreFollowedScroll: false,
   discoverItems: [], discoverSeen: new Set(), discoverLoading: false,
@@ -690,6 +693,7 @@ function captureBrowseOrigin() {
     searchKind: state.searchKind, searchQuery: state.searchQuery,
     searchSort: state.searchSort, artistId: state.artistId,
     artistName: state.artistName, followedArtist: state.followedArtist,
+    followedSearchQuery: state.followedSearchQuery,
   };
 }
 
@@ -741,6 +745,8 @@ function restoreBrowseOrigin() {
   state.searchSort = target.searchSort;
   state.artistId = target.artistId;
   state.artistName = target.artistName;
+  state.followedSearchQuery = target.followedSearchQuery || "";
+  $("#followed-search-query").value = state.followedSearchQuery;
   $("#pixiv-search-kind").value = target.searchKind === "artworks" ? "artworks" : "artists";
   $("#pixiv-search-query").value = target.searchQuery;
   $("#pixiv-search-order").value = target.searchSort;
@@ -849,17 +855,19 @@ async function loadPixivTags() {
 
 function switchView(view, options = {}) {
   if (state.view === "search" && view !== "search") state.previewReturn = null;
+  if (view !== "followed_artists") stopFollowedSearchPolling();
   const previousView = state.view;
   if (view !== "discover" || !options.preserveDiscover) {
     clearTimeout(state.discoverRetryTimer);
     state.discoverRetryTimer = null;
   }
   const wasViewingFollowedArtist = previousView === "followed_artists" && Boolean(state.followedArtist);
-  if (state.view === "followed_artists" && !state.followedArtist) {
+  if (state.view === "followed_artists" && !state.followedArtist && !state.followedSearchQuery) {
     state.followedListPage = state.remotePage;
     state.followedListScrollY = window.scrollY;
   }
   state.view = view;
+  if (view === "followed_artists" && options.clearFollowedSearch) state.followedSearchQuery = "";
   $("#artist-follow-header").hidden = true;
   $("#hero").hidden = view !== "library";
   $("#library").hidden = view !== "library";
@@ -872,10 +880,13 @@ function switchView(view, options = {}) {
   $("#show-ranking").classList.toggle("active", view === "ranking");
   $("#show-pixiv-search").classList.toggle("active", view === "search");
   $("#pixiv-search-form").hidden = view !== "search";
+  $("#followed-search-form").hidden = view !== "followed_artists" || Boolean(options.followedArtist);
   $("#ranking-form").hidden = view !== "ranking";
   $("#remote-sentinel").hidden = view !== "discover";
   $("#remote-refresh").hidden = view === "search" || view === "discover";
-  $("#remote-refresh").textContent = view === "followed_artists" ? "刷新列表" : view === "ranking" ? "刷新榜单" : "刷新作品";
+  $("#remote-refresh").textContent = view === "followed_artists"
+    ? (state.followedSearchQuery ? "更新索引" : "刷新列表")
+    : view === "ranking" ? "刷新榜单" : "刷新作品";
   $("#search-back").hidden = view !== "search" ||
     (!state.previewReturn && state.searchKind !== "artist_works");
   if (view === "library") {
@@ -894,14 +905,19 @@ function switchView(view, options = {}) {
     $("#search-back").hidden = target.backHidden;
     $("#search-back").textContent = target.backText;
     showMessage($("#remote-message"), target.message, target.messageError);
+    if (view === "followed_artists" && state.followedSearchQuery && !state.followedArtist) {
+      followedSearchRendered = "";
+      setTimeout(() => loadFollowedSearch(true), 0);
+    }
     return;
   }
   if (view === "followed_artists") {
     state.followedArtist = options.followedArtist || null;
-    if (!state.followedArtist) state.remotePage = state.followedListPage;
-    state.restoreFollowedScroll = previousView !== "followed_artists" || wasViewingFollowedArtist;
+    if (!state.followedArtist && !state.followedSearchQuery) state.remotePage = state.followedListPage;
+    state.restoreFollowedScroll = previousView !== "followed_artists" ||
+      wasViewingFollowedArtist || Boolean(options.clearFollowedSearch);
     $("#remote-title").textContent = "已关注画师";
-    $("#remote-description").textContent = "查看你关注的画师和他们的插画。";
+    $("#remote-description").textContent = "查看你关注的画师，或搜索他们的全部历史插画。";
     loadFollowedArtists();
     return;
   }
@@ -1255,6 +1271,8 @@ async function connectAccount() {
     state.followSelfIds.clear();
     state.followedListPage = 1;
     state.followedArtist = null;
+    followedIndexStarted = false;
+    followedSearchRendered = "";
     state.remotePage = 1;
     clearTimeout(state.discoverRetryTimer);
     state.discoverRetryTimer = null;
@@ -1288,6 +1306,9 @@ async function disconnectAccount() {
   state.followSeenIds = null;
   state.newFollowCount = 0;
   state.followedListCache.clear();
+  stopFollowedSearchPolling();
+  followedIndexStarted = false;
+  state.followedSearchQuery = "";
   state.followStatus.clear();
   state.followSelfIds.clear();
   clearTimeout(state.discoverRetryTimer);
@@ -1320,6 +1341,7 @@ function navigationSnapshot() {
     search: state.search, sort: $("#sort").value,
     searchKind: state.searchKind, searchQuery: state.searchQuery, searchSort: state.searchSort,
     artistId: state.artistId, artistName: state.artistName, followedArtist: state.followedArtist,
+    followedSearchQuery: state.followedSearchQuery,
     followedListPage: state.followedListPage, followedListScrollY: state.followedListScrollY,
     rankingMode: state.rankingMode, previewReturn: state.previewReturn,
     remoteItems: state.remoteItems.slice(), artists: state.artists.slice(), remoteLastPage: state.remoteLastPage,
@@ -1337,6 +1359,7 @@ function navigationSnapshot() {
 function navigationKey(value, withDialog = true) {
   return JSON.stringify([value.view,value.remotePage,value.filter,value.search,value.sort,
     value.searchKind,value.searchQuery,value.searchSort,value.artistId,value.followedArtist?.id,
+    value.followedSearchQuery,
     value.rankingMode,withDialog ? value.dialog : "",
     withDialog && value.dialog === "detail-dialog" ? value.selectedId : "",
     withDialog && value.dialog === "remote-dialog" ? value.remoteSelected?.id : ""]);
@@ -1389,6 +1412,7 @@ function restoreNavigation(target) {
       filter: target.filter, search: target.search,
       searchKind: target.searchKind, searchQuery: target.searchQuery, searchSort: target.searchSort,
       artistId: target.artistId, artistName: target.artistName, followedArtist: target.followedArtist,
+      followedSearchQuery: target.followedSearchQuery || "",
       followedListPage: target.followedListPage, followedListScrollY: target.followedListScrollY,
       restoreFollowedScroll: false, rankingMode: target.rankingMode, previewReturn: target.previewReturn,
       remoteItems: target.remoteItems.slice(), artists: target.artists.slice(), remoteLastPage: target.remoteLastPage,
@@ -1399,6 +1423,7 @@ function restoreNavigation(target) {
     $("#search").value = target.search; $("#sort").value = target.sort;
     $("#pixiv-search-kind").value = target.searchKind === "artworks" ? "artworks" : "artists";
     $("#pixiv-search-query").value = target.searchQuery;
+    $("#followed-search-query").value = state.followedSearchQuery;
     $("#pixiv-search-order").value = target.searchSort;
     $("#pixiv-search-order").hidden = target.searchKind !== "artworks";
     $("#ranking-mode").value = target.rankingMode;
@@ -1493,6 +1518,9 @@ document.addEventListener("keydown", (event) => {
   shortcutPrefixUntil=0;
   if (event.key === "/") {
     event.preventDefault();
+    if (state.view === "followed_artists" && !state.followedArtist) {
+      $("#followed-search-query").focus(); return;
+    }
     if (state.view !== "library" && state.view !== "search") switchView("search");
     (state.view === "library" ? $("#search") : $("#pixiv-search-query")).focus();
   } else if ((key === "j" || key === "k") && !event.shiftKey) {
@@ -1523,7 +1551,7 @@ $("#hero-add").onclick = () => openAdd();
 $("#empty-add").onclick = () => openAdd();
 $("#show-all").onclick = () => { state.filter = null; switchView("library"); };
 $("#show-following").onclick = () => switchView("following");
-$("#show-followed-artists").onclick = () => switchView("followed_artists");
+$("#show-followed-artists").onclick = () => switchView("followed_artists", {clearFollowedSearch: true});
 $("#show-discover").onclick = () => switchView("discover");
 $("#show-ranking").onclick = () => switchView("ranking");
 $("#show-pixiv-search").onclick = () => { state.previewReturn = null; switchView("search"); };
@@ -1533,6 +1561,28 @@ $("#ranking-mode").onchange = (event) => {
   loadRanking();
 };
 $("#pixiv-search-form").onsubmit = submitPixivSearch;
+$("#followed-search-form").onsubmit = (event) => {
+  event.preventDefault();
+  const query = $("#followed-search-query").value.trim();
+  if (!query || query === "#") {
+    showMessage($("#remote-message"), "请输入关键词或 #标签。", true);
+    return;
+  }
+  if (!state.followedSearchQuery) {
+    state.followedListPage = state.remotePage;
+    state.followedListScrollY = window.scrollY;
+  }
+  state.followedSearchQuery = query;
+  state.remotePage = 1;
+  followedIndexStarted = false;
+  loadFollowedArtists();
+};
+$("#followed-search-clear").onclick = () => {
+  state.followedSearchQuery = "";
+  state.remotePage = state.followedListPage;
+  state.restoreFollowedScroll = true;
+  loadFollowedArtists();
+};
 $("#pixiv-search-kind").onchange = () => { $("#pixiv-search-order").hidden = $("#pixiv-search-kind").value !== "artworks"; };
 $("#search-back").onclick = () => {
   if (galleryBack()) return;
@@ -1554,6 +1604,14 @@ const loadCurrentRemote = () => state.view === "search" ? loadSearch() :
   state.view === "ranking" ? loadRanking() :
   state.view === "discover" ? loadDiscoverBatch() : loadFeed();
 $("#remote-refresh").onclick = () => {
+  if (state.view === "followed_artists" && state.followedSearchQuery && !state.followedArtist) {
+    api("/api/followed-index/start", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({force: true})
+    }).then(() => { followedIndexStarted = true; loadFollowedSearch(); })
+      .catch((error) => showMessage($("#remote-message"), error.message, true));
+    return;
+  }
   if (state.view === "followed_artists") state.followedListCache.clear();
   loadCurrentRemote();
 };
@@ -1761,10 +1819,83 @@ async function openLocalImage(art, page, action) {
   }
 }
 
+let followedSearchTimer = null;
+let followedSearchRequest = 0;
+let followedIndexStarted = false;
+let followedSearchRendered = "";
+
+function stopFollowedSearchPolling() {
+  clearTimeout(followedSearchTimer);
+  followedSearchTimer = null;
+  followedSearchRequest++;
+}
+
+async function loadFollowedSearch(poll = false) {
+  clearTimeout(followedSearchTimer);
+  const request = ++followedSearchRequest;
+  const query = state.followedSearchQuery;
+  const page = state.remotePage;
+  if (!poll) {
+    $("#remote-grid").replaceChildren();
+    $("#remote-grid").className = "art-grid";
+    followedSearchRendered = "";
+    showMessage($("#remote-message"), "正在搜索已关注画师的历史作品…");
+  }
+  try {
+    if (!followedIndexStarted) {
+      await api("/api/followed-index/start", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({force: false})
+      });
+      followedIndexStarted = true;
+    }
+    const result = await api(`/api/followed-index/search?q=${encodeURIComponent(query)}&page=${page}`);
+    if (request !== followedSearchRequest || state.view !== "followed_artists" ||
+        state.followedArtist || state.followedSearchQuery !== query || state.remotePage !== page) return;
+    const index = result.index;
+    state.remoteItems = result.artworks;
+    state.remoteLastPage = index.running || result.is_last_page;
+    setHeaderFollow("");
+    $("#remote-title").textContent = "关注画师的插画";
+    $("#remote-description").textContent = `“${query}” · 当前找到 ${result.total} 件 · 已收录 ${index.indexed_works} 件历史作品`;
+    const rendered = JSON.stringify(result.artworks);
+    if (rendered !== followedSearchRendered) {
+      followedSearchRendered = rendered;
+      renderFeed();
+    }
+    $("#remote-prev").disabled = page <= 1;
+    $("#remote-next").disabled = state.remoteLastPage;
+    $("#remote-page").textContent = `第 ${page} 页`;
+    if (index.running) {
+      const progress = index.total_artists
+        ? `正在建立索引：已检查 ${index.artists_done}/${index.total_artists} 位画师，收录 ${index.indexed_works} 件作品。结果会随着索引更新。`
+        : "正在读取已关注画师列表，准备建立历史作品索引…";
+      showMessage($("#remote-message"), progress);
+      followedSearchTimer = setTimeout(() => loadFollowedSearch(true), 2500);
+    } else if (index.status === "error" || index.status === "partial" || index.status === "paused") {
+      const failures = index.failed_artists ? `${index.failed_artists} 位画师读取失败。` : "";
+      showMessage($("#remote-message"), `${failures}${index.last_error || "索引尚未完成。"} 点击“更新索引”继续；当前结果可能不完整。`, true);
+    } else if (!result.artworks.length) {
+      showMessage($("#remote-message"), "已索引的关注画师作品中没有找到匹配结果。");
+    } else {
+      showMessage($("#remote-message"), "");
+    }
+  } catch (error) {
+    if (request === followedSearchRequest && state.view === "followed_artists") {
+      showMessage($("#remote-message"), error.message, true);
+    }
+  }
+}
+
 async function loadFollowedArtists() {
   const selected = state.followedArtist;
   const page = state.remotePage;
-  if (!selected) state.followedListPage = page;
+  if (!selected && !state.followedSearchQuery) state.followedListPage = page;
+  $("#followed-search-form").hidden = Boolean(selected);
+  $("#followed-search-query").value = state.followedSearchQuery;
+  $("#followed-search-clear").hidden = !state.followedSearchQuery;
+  $("#remote-refresh").textContent = selected ? "刷新作品" : state.followedSearchQuery ? "更新索引" : "刷新列表";
+  if (selected || !state.followedSearchQuery) stopFollowedSearchPolling();
   $("#remote-grid").replaceChildren();
   $("#remote-grid").className = "art-grid";
   $("#search-back").hidden = !selected;
@@ -1776,6 +1907,7 @@ async function loadFollowedArtists() {
     if (!$("#account-dialog").open) $("#account-dialog").showModal();
     return;
   }
+  if (!selected && state.followedSearchQuery) return loadFollowedSearch();
   try {
     let result = !selected ? state.followedListCache.get(page) : null;
     if (!result) {
