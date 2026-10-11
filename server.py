@@ -16,8 +16,9 @@ import urllib.parse
 import urllib.request
 import uuid
 import webbrowser
+from contextlib import contextmanager
 from ctypes import wintypes
-from threading import Timer, RLock
+from threading import Timer, RLock, Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from html.parser import HTMLParser
 from pathlib import Path
@@ -680,6 +681,276 @@ def pixiv_artist_works(uid, page):
             "is_last_page": page * 24 >= len(ids), "total": len(ids)}
 
 
+FOLLOWED_INDEX_LOCK = RLock()
+FOLLOWED_INDEX_WORKERS = {}
+FOLLOWED_INDEX_DELAY = 0.2
+FOLLOWED_INDEX_REFRESH_SECONDS = 24 * 60 * 60
+
+
+@contextmanager
+def followed_index_connection():
+    """Keep searchable Pixiv metadata separate from the user's saved originals."""
+    DATA.mkdir(exist_ok=True)
+    db = sqlite3.connect(DATA / "followed_index.sqlite3", timeout=20)
+    db.row_factory = sqlite3.Row
+    try:
+        db.execute("PRAGMA busy_timeout=20000")
+        db.execute("""CREATE TABLE IF NOT EXISTS followed_index_accounts (
+            account_id TEXT PRIMARY KEY, status TEXT NOT NULL DEFAULT 'idle',
+            total_artists INTEGER NOT NULL DEFAULT 0,
+            artists_done INTEGER NOT NULL DEFAULT 0,
+            indexed_works INTEGER NOT NULL DEFAULT 0,
+            failed_artists INTEGER NOT NULL DEFAULT 0,
+            finished_at INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT NOT NULL DEFAULT ''
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS followed_index_artists (
+            account_id TEXT NOT NULL, artist_id TEXT NOT NULL,
+            name TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
+            complete INTEGER NOT NULL DEFAULT 0,
+            indexed_at INTEGER NOT NULL DEFAULT 0,
+            work_total INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (account_id, artist_id)
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS followed_index_works (
+            account_id TEXT NOT NULL, artist_id TEXT NOT NULL,
+            pixiv_id TEXT NOT NULL, title TEXT NOT NULL, artist TEXT NOT NULL,
+            tags TEXT NOT NULL, tag_keys TEXT NOT NULL, search_text TEXT NOT NULL,
+            thumbnail TEXT NOT NULL, page_count INTEGER NOT NULL,
+            source_url TEXT NOT NULL,
+            PRIMARY KEY (account_id, pixiv_id)
+        )""")
+        db.execute("CREATE INDEX IF NOT EXISTS followed_works_artist ON followed_index_works (account_id, artist_id)")
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def followed_index_status(account_id=None):
+    account_id = account_id or pixiv_current_user_id()
+    with followed_index_connection() as db:
+        row = db.execute("SELECT * FROM followed_index_accounts WHERE account_id=?", (account_id,)).fetchone()
+    result = dict(row) if row else {"status": "idle", "total_artists": 0, "artists_done": 0,
+                                    "indexed_works": 0, "failed_artists": 0,
+                                    "finished_at": 0, "last_error": ""}
+    result.pop("account_id", None)
+    with FOLLOWED_INDEX_LOCK:
+        running = bool((worker := FOLLOWED_INDEX_WORKERS.get(account_id)) and worker.is_alive())
+    if result["status"] == "scanning" and not running:
+        result["status"] = "paused"
+    result["running"] = running
+    return result
+
+
+class FollowedIndexInterrupted(Exception):
+    pass
+
+
+def _followed_index_check_session(cookie):
+    if not SESSION_COOKIE or SESSION_COOKIE != cookie:
+        raise FollowedIndexInterrupted()
+
+
+def _followed_index_store_works(db, account_id, artist_id, items):
+    for item in items:
+        tags = item["tags"]
+        keys = "\x1f" + "\x1f".join(tag.casefold().replace("\x1f", "") for tag in tags) + "\x1f"
+        searchable = "\n".join([item["title"], item["artist"], *tags]).casefold()
+        db.execute("""INSERT INTO followed_index_works
+            (account_id, artist_id, pixiv_id, title, artist, tags, tag_keys,
+             search_text, thumbnail, page_count, source_url)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(account_id,pixiv_id) DO UPDATE SET
+            artist_id=excluded.artist_id, title=excluded.title, artist=excluded.artist,
+            tags=excluded.tags, tag_keys=excluded.tag_keys,
+            search_text=excluded.search_text, thumbnail=excluded.thumbnail,
+            page_count=excluded.page_count, source_url=excluded.source_url""",
+            (account_id, artist_id, item["id"], item["title"], item["artist"],
+             json.dumps(tags, ensure_ascii=False), keys, searchable,
+             item["thumbnail"], item["page_count"], item["source_url"]))
+
+
+def _build_followed_index(account_id, cookie, force=False):
+    """Index every accessible illustration by every currently followed artist."""
+    try:
+        artists = {}
+        page = 1
+        while True:
+            _followed_index_check_session(cookie)
+            result = pixiv_followed_artists(page)
+            _followed_index_check_session(cookie)
+            for artist in result["artists"]:
+                artists[artist["id"]] = artist
+            if result["is_last_page"]:
+                break
+            page += 1
+            if page > 1000:
+                raise ValueError("关注画师列表超出可索引范围。")
+            time.sleep(FOLLOWED_INDEX_DELAY)
+
+        with followed_index_connection() as db:
+            db.execute("UPDATE followed_index_artists SET active=0 WHERE account_id=?", (account_id,))
+            for artist in artists.values():
+                db.execute("""INSERT INTO followed_index_artists (account_id,artist_id,name,active)
+                    VALUES (?,?,?,1) ON CONFLICT(account_id,artist_id) DO UPDATE SET
+                    name=excluded.name, active=1""",
+                    (account_id, artist["id"], artist["name"]))
+            db.execute("""DELETE FROM followed_index_works WHERE account_id=? AND artist_id IN
+                (SELECT artist_id FROM followed_index_artists WHERE account_id=? AND active=0)""",
+                (account_id, account_id))
+            db.execute("DELETE FROM followed_index_artists WHERE account_id=? AND active=0", (account_id,))
+            db.execute("""UPDATE followed_index_accounts SET total_artists=?,artists_done=0,
+                indexed_works=(SELECT COUNT(*) FROM followed_index_works w
+                    JOIN followed_index_artists a ON a.account_id=w.account_id
+                        AND a.artist_id=w.artist_id
+                    WHERE w.account_id=? AND a.active=1),
+                failed_artists=0,last_error='' WHERE account_id=?""",
+                (len(artists), account_id, account_id))
+
+        consecutive_errors = 0
+        for artist in artists.values():
+            _followed_index_check_session(cookie)
+            uid = artist["id"]
+            try:
+                body = pixiv_json(f"https://www.pixiv.net/ajax/user/{uid}/profile/all")
+                _followed_index_check_session(cookie)
+                illusts = body.get("illusts") if isinstance(body, dict) else None
+                if not isinstance(illusts, dict):
+                    raise ValueError("画师作品列表格式已变化。")
+                ids = sorted((pid for pid in illusts if pid.isdigit()), key=int, reverse=True)
+                with followed_index_connection() as db:
+                    existing = {row["pixiv_id"] for row in db.execute(
+                        "SELECT pixiv_id FROM followed_index_works WHERE account_id=? AND artist_id=?",
+                        (account_id, uid))}
+                pending = ids if force else [pid for pid in ids if pid not in existing]
+                for offset in range(0, len(pending), 24):
+                    _followed_index_check_session(cookie)
+                    batch = pending[offset:offset + 24]
+                    parameters = urllib.parse.urlencode(
+                        [("ids[]", pid) for pid in batch] +
+                        [("work_category", "illust"), ("is_first_page", 1 if offset == 0 else 0)]
+                    )
+                    detail = pixiv_json(f"https://www.pixiv.net/ajax/user/{uid}/profile/illusts?{parameters}")
+                    _followed_index_check_session(cookie)
+                    works = detail.get("works") if isinstance(detail, dict) else None
+                    if not isinstance(works, dict):
+                        raise ValueError("画师作品详情格式已变化。")
+                    items = [item for pid in batch if (item := normalize_feed_item(works.get(pid)))]
+                    found = {item["id"] for item in items}
+                    missing = set(batch) - found
+                    change = len(found - existing) - len(missing & existing)
+                    with followed_index_connection() as db:
+                        _followed_index_store_works(db, account_id, uid, items)
+                        db.executemany("DELETE FROM followed_index_works WHERE account_id=? AND pixiv_id=?",
+                                       [(account_id, pid) for pid in missing])
+                        db.execute("""UPDATE followed_index_accounts SET indexed_works=indexed_works+?
+                            WHERE account_id=?""", (change, account_id))
+                    existing.update(found)
+                    existing.difference_update(missing)
+                    time.sleep(FOLLOWED_INDEX_DELAY)
+                stale = existing - set(ids)
+                with followed_index_connection() as db:
+                    db.executemany("DELETE FROM followed_index_works WHERE account_id=? AND pixiv_id=?",
+                                   [(account_id, pid) for pid in stale])
+                    db.execute("""UPDATE followed_index_artists SET complete=1,indexed_at=?,work_total=?
+                        WHERE account_id=? AND artist_id=?""", (int(time.time()), len(ids), account_id, uid))
+                    db.execute("""UPDATE followed_index_accounts SET artists_done=artists_done+1,
+                        indexed_works=(SELECT COUNT(*) FROM followed_index_works w
+                            JOIN followed_index_artists a ON a.account_id=w.account_id
+                                AND a.artist_id=w.artist_id
+                            WHERE w.account_id=? AND a.active=1)
+                        WHERE account_id=?""", (account_id, account_id))
+                consecutive_errors = 0
+            except ValueError as exc:
+                if re.search(r"HTTP (429|5\d\d)", str(exc)):
+                    raise
+                consecutive_errors += 1
+                with followed_index_connection() as db:
+                    db.execute("""UPDATE followed_index_artists SET complete=0
+                        WHERE account_id=? AND artist_id=?""", (account_id, uid))
+                    db.execute("""UPDATE followed_index_accounts SET artists_done=artists_done+1,
+                        failed_artists=failed_artists+1,last_error=? WHERE account_id=?""",
+                        (f"画师 {uid}：{exc}", account_id))
+                if consecutive_errors >= 3:
+                    raise ValueError("连续 3 位画师读取失败，索引已暂停；请稍后点击“更新索引”重试。") from exc
+
+        with followed_index_connection() as db:
+            failed = db.execute("SELECT failed_artists FROM followed_index_accounts WHERE account_id=?",
+                                (account_id,)).fetchone()[0]
+            db.execute("""UPDATE followed_index_accounts SET status=?,finished_at=?
+                WHERE account_id=?""", ("partial" if failed else "complete", int(time.time()), account_id))
+    except FollowedIndexInterrupted:
+        with followed_index_connection() as db:
+            db.execute("UPDATE followed_index_accounts SET status='paused' WHERE account_id=?", (account_id,))
+    except Exception as exc:
+        with followed_index_connection() as db:
+            db.execute("UPDATE followed_index_accounts SET status='error',last_error=? WHERE account_id=?",
+                       (str(exc)[:200], account_id))
+
+
+def start_followed_index(force=False):
+    account_id = pixiv_current_user_id()
+    with FOLLOWED_INDEX_LOCK:
+        worker = FOLLOWED_INDEX_WORKERS.get(account_id)
+        if worker and worker.is_alive():
+            return followed_index_status(account_id)
+        current = followed_index_status(account_id)
+        if not force and current["status"] == "complete" and \
+                time.time() - current["finished_at"] < FOLLOWED_INDEX_REFRESH_SECONDS:
+            return current
+        with followed_index_connection() as db:
+            db.execute("""INSERT INTO followed_index_accounts (account_id,status)
+                VALUES (?,'scanning') ON CONFLICT(account_id) DO UPDATE SET status='scanning',last_error=''""",
+                (account_id,))
+        worker = Thread(target=_build_followed_index,
+                        args=(account_id, SESSION_COOKIE, force), daemon=True)
+        FOLLOWED_INDEX_WORKERS[account_id] = worker
+        worker.start()
+    return followed_index_status(account_id)
+
+
+def search_followed_index(query, page):
+    account_id = pixiv_current_user_id()
+    query = str(query).strip()
+    if not query or len(query) > 100 or any(char in query for char in ("\x00", "\x1f")):
+        raise ValueError("请输入 1 到 100 字的关键词或 #标签。")
+    if not 1 <= page <= 1000:
+        raise ValueError("页码超出范围。")
+    clauses = ["w.account_id=?", "a.active=1"]
+    values = [account_id]
+    if query.startswith("#"):
+        tags = [tag.strip().casefold() for tag in query.split("#") if tag.strip()]
+        if not tags:
+            raise ValueError("请在 # 后输入标签。")
+        for tag in tags:
+            clauses.append("instr(w.tag_keys, ?) > 0")
+            values.append("\x1f" + tag + "\x1f")
+    else:
+        for word in query.casefold().split():
+            clauses.append("instr(w.search_text, ?) > 0")
+            values.append(word)
+    predicate = " AND ".join(clauses)
+    source = "FROM followed_index_works w JOIN followed_index_artists a " \
+             "ON a.account_id=w.account_id AND a.artist_id=w.artist_id "
+    with followed_index_connection() as db:
+        total = db.execute(f"SELECT COUNT(*) {source} WHERE {predicate}", values).fetchone()[0]
+        rows = db.execute(f"""SELECT w.pixiv_id,w.title,w.artist,w.artist_id,w.tags,
+            w.thumbnail,w.page_count,w.source_url {source} WHERE {predicate}
+            ORDER BY CAST(w.pixiv_id AS INTEGER) DESC LIMIT 24 OFFSET ?""",
+            (*values, (page - 1) * 24)).fetchall()
+    artworks = [dict(row) for row in rows]
+    for item in artworks:
+        item["id"] = item.pop("pixiv_id")
+        item["tags"] = json.loads(item["tags"])
+    return {"artworks": artworks, "page": page, "total": total,
+            "is_last_page": page * 24 >= total,
+            "index": followed_index_status(account_id)}
+
+
 def clean_tags(value):
     if isinstance(value, str):
         value = re.split(r"[,，\n]+", value)
@@ -884,6 +1155,18 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, pixiv_followed_artists(page))
             except (ValueError, TypeError) as exc:
                 self.send_json(400, {"error": str(exc)})
+        elif path == "/api/followed-index/status":
+            try:
+                self.send_json(200, followed_index_status())
+            except ValueError as exc:
+                self.send_json(400, {"error": str(exc)})
+        elif path == "/api/followed-index/search":
+            query = urllib.parse.parse_qs(parsed.query)
+            try:
+                page = int(query.get("page", ["1"])[0])
+                self.send_json(200, search_followed_index(query.get("q", [""])[0], page))
+            except (ValueError, TypeError) as exc:
+                self.send_json(400, {"error": str(exc)})
         elif path == "/api/artist-status":
             query = urllib.parse.parse_qs(parsed.query)
             try:
@@ -941,6 +1224,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/api/appearance":
                 self.send_json(200, save_appearance(self.read_json()))
+            elif path == "/api/followed-index/start":
+                payload = self.read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("索引请求格式无效。")
+                if type(payload.get("force", False)) is not bool:
+                    raise ValueError("索引刷新参数无效。")
+                self.send_json(200, start_followed_index(payload.get("force", False)))
             elif path == "/api/appearance/wallpaper":
                 query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
                 values = {key: query.get(key, [APPEARANCE_DEFAULTS[key]])[0]
